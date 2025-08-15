@@ -114,7 +114,7 @@ run.Granger <- function(config.file){
       all.X.test <-
       all.test <-
       all.SHAP <-
-      all.results <
+      all.results <-
       data.frame()
 
   } else {
