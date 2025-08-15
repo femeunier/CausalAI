@@ -33,7 +33,7 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
 
-dir.name <- "./outputs/Granger/"
+dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
 mainconfig.file <- file.path(dir.name,"main.config.RDS")
 

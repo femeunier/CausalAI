@@ -34,7 +34,7 @@ run.Granger <- function(config.file){
                    "_lons",lon.min,".",lon.max)
 
 
-  CO2 <- read.table("./data/global_co2_ann_1700_2024.txt") %>%
+  CO2 <- read.table("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/global_co2_ann_1700_2024.txt") %>%
     rename(year = V1,
            CO2 = V2)
 
@@ -49,14 +49,14 @@ run.Granger <- function(config.file){
     y = CO2$CO2,
     xout = monthly_df$year_decimal)$y
 
-  climate <- readRDS(paste0("./data/grid.",cmodel,".JRA.v13.RDS")) %>%
+  climate <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/grid.",cmodel,".JRA.v13.RDS")) %>%
     mutate(lat = round(lat,digits = 3),
            lon = round(lon,digits = 3)) %>%
     left_join(monthly_df,
               by = c("year","month")) %>%
     ungroup()
 
-  msl.file <- paste0("./outputs/MSL.grid.",cmodel,".RDS")
+  msl.file <- paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/MSL.grid.",cmodel,".RDS")
   msl.ts <- readRDS(msl.file) %>%
     mutate(year = year(time),
            month = month(time)) %>%
@@ -68,7 +68,7 @@ run.Granger <- function(config.file){
     mutate(lon = case_when(lon > 180 ~ lon - 360,
                            TRUE ~ lon))
 
-  CC <- readRDS(paste0("./outputs/Trendy.",cmodel,".S2.CC.pantropical.v13.RDS")) %>%
+  CC <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Trendy.",cmodel,".S2.CC.pantropical.v13.RDS")) %>%
     dplyr::select(lon,lat,year,month,gpp) %>%
     mutate(lat = round(lat,digits = 3),
            lon = round(lon,digits = 3)) %>%
@@ -116,13 +116,13 @@ run.Granger <- function(config.file){
       data.frame()
   } else {
 
-    df.QoF <- tryCatch(readRDS(paste0("./outputs/QoF.",cmodel,".Granger.RDS")),
+    df.QoF <- tryCatch(readRDS(file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS"))),
                        error = function(e) data.frame())
-    all.X.test <- tryCatch(readRDS(paste0("./outputs/All.test.XGBoosts.",cmodel,".Granger.RDS")),
+    all.X.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.test.XGBoosts_",suffix,".RDS"))),
                            error = function(e) data.frame())
-    all.SHAP <- tryCatch(readRDS(paste0("./outputs/All.SHAP.",cmodel,".Granger.RDS")),
+    all.SHAP <- tryCatch(readRDS(file.path(dest.dir,paste0("All.SHAP_",suffix,".RDS"))),
                          error = function(e) data.frame())
-    all.test <- tryCatch(readRDS(paste0("./outputs/All.X.test.",cmodel,".Granger.RDS")),
+    all.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.",suffix,".RDS"))),
                          error = function(e) data.frame())
 
     lons_lats <- lons_lats[!(lons_lats %in% unique(df.QoF$lon_lat))]
