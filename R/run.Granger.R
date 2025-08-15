@@ -114,6 +114,7 @@ run.Granger <- function(config.file){
       all.X.test <-
       all.test <-
       all.SHAP <-
+      all.results <
       data.frame()
 
   } else {
@@ -125,6 +126,8 @@ run.Granger <- function(config.file){
     all.SHAP <- tryCatch(readRDS(file.path(dest.dir,paste0("All.SHAP_",suffix,".RDS"))),
                          error = function(e) data.frame())
     all.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.",suffix,".RDS"))),
+                         error = function(e) data.frame())
+    all.results <- tryCatch(readRDS(file.path(dest.dir,paste0("All.results.",suffix,".RDS"))),
                          error = function(e) data.frame())
 
     lons_lats <- lons_lats[!(lons_lats %in% unique(df.QoF$lon_lat))]
@@ -231,6 +234,13 @@ run.Granger <- function(config.file){
                                  initial = initial, horizon = horizon,
                                  step = step,
                                  bestTune = bestTune)
+    results <- run$results %>%
+      as.data.frame()
+
+    all.results <- bind_rows(all.results,
+                             results %>%
+                               mutate(model = cmodel,
+                                      lon_lat = clon.lat))
 
     shap_df <- run$shap_lags %>%
       as.data.frame()
@@ -252,6 +262,8 @@ run.Granger <- function(config.file){
               file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS")))
       saveRDS(all.X.test,
               file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
+      saveRDS(all.results,
+              file.path(dest.dir,paste0("All.results_",suffix,".RDS")))
 
       hour_start <- Sys.time()
 
@@ -266,5 +278,7 @@ run.Granger <- function(config.file){
           file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS")))
   saveRDS(all.X.test,
           file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
+  saveRDS(all.results,
+          file.path(dest.dir,paste0("All.results_",suffix,".RDS")))
 
 }

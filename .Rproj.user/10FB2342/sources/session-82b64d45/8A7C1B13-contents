@@ -7,36 +7,14 @@ library(tidyr)
 
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/QoF.*Granger.RDS",
+          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.QoF.Granger.RDS",
           "./outputs/"))
 
-df.QoF <- data.frame()
-files <- list.files("./outputs/",
-                    pattern = "^QoF.*Granger\\.RDS$",
-                    full.names = TRUE)
-
-df.QoF <- all.X.test <- all.test <- all.SHAP <- 
-  data.frame()
-
-for (ifile in seq(1,length(files))){
-  
-  cfile <- files[ifile]
-  cQoF <- readRDS(cfile)
-  
-  df.QoF <- bind_rows(df.QoF,
-                      cQoF %>%
-                        mutate(lon = as.numeric(sub("\\_.*", "", lon_lat)),
-                               lat = as.numeric(sub(".*\\_", "", lon_lat)),
-                               model_lon_lat = paste0(model,"_",lon_lat)))
-  
-}
+df.QoF <- readRDS("./outputs/All.QoF.Granger.RDS")
 
 models <- sort(unique(df.QoF$model))
 models.lons.lats <- df.QoF %>%
-  filter(mean.y > 0.1) %>%
   pull(model_lon_lat)
-
-GPP.threshold = 0.1
 
 selected.model <- df.QoF %>%
   group_by(model) %>%
@@ -45,31 +23,25 @@ selected.model <- df.QoF %>%
   filter(N == max(N)) %>%
   pull(model)
 
-selected.model <- "CABLE-POP"
-
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
-ggplot(data = df.QoF %>%
-         filter(model == "")) +
+ggplot(data = df.QoF) +
   geom_raster(aes(x = lon, y = lat,
                   fill = mean.y)) +
   geom_sf(data = world,fill = NA, color = "grey17") +
   scale_y_continuous(limits = c(-1,1)*23.5) +
   scale_x_continuous(limits = c(-15,60)) +
+  facet_wrap(~ model) +
   theme_map() 
-
-
 
 ggplot(data = df.QoF) +
   geom_boxplot(aes(x = model,
                    y = mean.y)) +
-  geom_hline(yintercept = GPP.threshold) +
   theme_bw()
 
 
 ggplot(data = df.QoF %>%
-         filter(model == selected.model,
-                model_lon_lat %in% models.lons.lats)) +
+         filter(model_lon_lat %in% models.lons.lats)) +
   geom_raster(aes(x = lon, y = lat,
                   fill = Rsq)) +
   geom_sf(data = world,fill = NA, color = "grey17") +
@@ -87,26 +59,11 @@ ggplot(data = df.QoF %>%
 
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.test.XGBoosts.*.RDS",
+          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.test.Granger.RDS",
           "./outputs/"))
 
-df.test <- data.frame()
-files <- list.files("./outputs/",
-                    "All.test.XGBoosts.*Granger.RDS",
-                    full.names = TRUE)
+df.test <- readRDS("./outputs/All.test.Granger.RDS")
 
-for (ifile in seq(1,length(files))){
-  
-  cfile <- files[ifile]
-  cTest <- readRDS(cfile)
-  
-  df.test <- bind_rows(df.test,
-                       cTest %>%
-                         mutate(lon = as.numeric(sub("\\_.*", "", lon_lat)),
-                                lat = as.numeric(sub(".*\\_", "", lon_lat)),
-                                model_lon_lat = paste0(model,"_",lon_lat)))
-  
-}
 
 ggplot(data = df.test %>%
          filter(model_lon_lat %in% models.lons.lats),
@@ -124,30 +81,14 @@ ggplot(data = df.test %>%
 
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.SHAP.*.RDS",
+          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.SHAP.Granger.RDS",
           "./outputs/"))
 
-df.SHAP <- data.frame()
-files <- list.files("./outputs/",
-                    "All.SHAP.*Granger.RDS",
-                    full.names = TRUE)
-
-for (ifile in seq(1,length(files))){
-  
-  cfile <- files[ifile]
-  cSHAP <- readRDS(cfile)
-  
-  df.SHAP <- bind_rows(df.SHAP,
-                       cSHAP %>%
-                         mutate(lon = as.numeric(sub("\\_.*", "", lon_lat)),
-                                lat = as.numeric(sub(".*\\_", "", lon_lat)),
-                                model_lon_lat = paste0(model,"_",lon_lat)))
-  
-}
+df.SHAP <- readRDS("./outputs/All.SHAP.Granger.RDS") 
 
 df.SHAP.sum <- df.SHAP %>%
   group_by(model,model_lon_lat,lon_lat,lon,lat,cause,target) %>%
-  summarise(SHAP.m = sum(mean_abs_shap,na.rm = TRUE),
+  summarise(SHAP.m = sum(mean_shap,na.rm = TRUE),
             .groups = "keep") 
 
 ggplot(data = df.SHAP %>%
@@ -155,7 +96,7 @@ ggplot(data = df.SHAP %>%
          group_by(model) %>%
          filter(lon_lat == lon_lat[1])) +
   geom_line(aes(x = lag,
-                y = mean_abs_shap,
+                y = mean_shap,
                 color = cause)) +
   facet_wrap(~ model) +
   theme_bw()
@@ -198,6 +139,9 @@ ggplot(data = df.SHAP.max2 %>%
   geom_raster(aes(x = lon, y = lat,
                   fill = cause.cat),) +
   geom_sf(data = world,fill = NA, color = "grey17") +  
+  
+  geom_vline(xintercept = seq(-15,60,10)) +
+  geom_hline(yintercept = seq(-23,23,10)) +
   facet_wrap(~ model) +
   scale_y_continuous(limits = c(-1,1)*23.5) +
   scale_x_continuous(limits = c(-15,60)) +
