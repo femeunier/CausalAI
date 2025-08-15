@@ -244,6 +244,15 @@ run.Granger <- function(config.file){
 
     if (elapsed >= time2save) {
 
+      saveRDS(df.QoF,
+              file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS")))
+      saveRDS(all.test,
+              file.path(dest.dir,paste0("All.test.XGBoosts.Granger_",suffix,".RDS")))
+      saveRDS(all.SHAP,
+              file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS")))
+      saveRDS(all.X.test,
+              file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
+
       hour_start <- Sys.time()
 
     }
