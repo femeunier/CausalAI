@@ -57,7 +57,7 @@ for (cmodel in models){
       stop()
 
       write.Granger.script(dir.name = file.path(dir.name,cmodel),
-                           file.name = paste0("Config_",suffix,".R"),
+                           file.name = paste0("Rscript_",suffix,".R"),
                            config.location = mainconfig.file,
                            cmodel,
                            lat.min,lat.max,lon.min,lon.max,year.min,year.max)

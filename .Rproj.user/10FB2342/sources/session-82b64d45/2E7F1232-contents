@@ -40,6 +40,9 @@ mainconfig.file <- file.path(dir.name,"main.config.RDS")
 saveRDS(main.config,
         mainconfig.file)
 
+
+list_dir <- list() ; job.names <- c()
+
 for (cmodel in models){
 
   dir.create(file.path(dir.name,cmodel),showWarnings = FALSE)
@@ -54,17 +57,30 @@ for (cmodel in models){
                        "_lats",lat.min,".",lat.max,
                        "_lons",lon.min,".",lon.max)
 
-      stop()
-
       write.Granger.script(dir.name = file.path(dir.name,cmodel),
-                           file.name = paste0("Config_",suffix,".R"),
+                           file.name = paste0("Rscript_",suffix,".R"),
                            config.location = mainconfig.file,
                            cmodel,
                            lat.min,lat.max,lon.min,lon.max,year.min,year.max)
+      
+      
+      ED2scenarios::write_jobR(file = file.path(cdir,cjobname),
+                               nodes = 1,ppn = 24,mem = 25,walltime = 72,
+                               prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
+                               CD = "/data/gent/vo/000/gvo00074/felicien/R/",
+                               Rscript = Rscript.name)
+      
 
+      list_dir[[suffix]] = cdir
+      
     }
   }
 }
+
+dumb <- write_bash_submission(file = file.path(getwd(),
+                                               "all_jobs_Bayesian_crossed2.sh"),
+                              list_files = list_dir,
+                              job_name = job.names)
 
 
 

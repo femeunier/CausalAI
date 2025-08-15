@@ -12,6 +12,7 @@ run.Granger <- function(config.file){
   x_var <- config[["x_var"]]
   y_var <- config[["y_var"]]
   Grid <- config[["Grid"]]
+  restart <- config[["restart"]]
 
   time2save <- config[["time2save"]]
 
