@@ -88,8 +88,8 @@ run.Granger <- function(config.file){
     mutate(lon_lat = paste0(lon,"_",lat))
 
   all.select <- all %>%
-    filter(lat <= lat.max, lat > lat.min) %>%
-    filter(lon >= lon.min, lon < lon.min) %>%
+    filter(lat >= lat.min, lat < lat.max) %>%
+    filter(lon >= lon.min, lon < lon.max) %>%
     filter(year >= year.min, year <= year.max) %>%
     na.omit()
 
