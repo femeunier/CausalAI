@@ -121,13 +121,13 @@ run.Granger <- function(config.file){
 
     df.QoF <- tryCatch(readRDS(file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS"))),
                        error = function(e) data.frame())
-    all.X.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.test.XGBoosts_",suffix,".RDS"))),
+    all.X.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.test.XGBoosts.Granger_",suffix,".RDS"))),
                            error = function(e) data.frame())
-    all.SHAP <- tryCatch(readRDS(file.path(dest.dir,paste0("All.SHAP_",suffix,".RDS"))),
+    all.SHAP <- tryCatch(readRDS(file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS"))),
                          error = function(e) data.frame())
-    all.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.",suffix,".RDS"))),
+    all.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.Granger",suffix,".RDS"))),
                          error = function(e) data.frame())
-    all.results <- tryCatch(readRDS(file.path(dest.dir,paste0("All.results.",suffix,".RDS"))),
+    all.results <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS"))),
                          error = function(e) data.frame())
 
     lons_lats <- lons_lats[!(lons_lats %in% unique(df.QoF$lon_lat))]
@@ -279,6 +279,6 @@ run.Granger <- function(config.file){
   saveRDS(all.X.test,
           file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
   saveRDS(all.results,
-          file.path(dest.dir,paste0("All.results_",suffix,".RDS")))
+          file.path(dest.dir,paste0("All.results.Granger_",suffix,".RDS")))
 
 }
