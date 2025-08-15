@@ -168,15 +168,23 @@ run.Granger <- function(config.file){
     dfl.test <- as.matrix(dfl[-train_ind, setdiff(colnames(dfl), y_var)])
     y.test <- as.matrix(dfl[-train_ind, y_var])
 
-    fit <- tryCatch(tune_xgb_with_caret(train = data.matrix(dfl.train),
-                                        y = as.numeric(y.train),
-                                        grid = Grid,
-                                        target = "gpp",
-                                        lags = lags,
-                                        initial = initial, horizon = horizon, skip = skip),
-                    error = function(e) NULL)
+    # fit <- tryCatch(tune_xgb_with_caret(train = data.matrix(dfl.train),
+    #                                     y = as.numeric(y.train),
+    #                                     grid = Grid,
+    #                                     target = "gpp",
+    #                                     lags = lags,
+    #                                     initial = initial, horizon = horizon, skip = skip),
+    #                 error = function(e) NULL)
+#
+#     if (is.null(fit)) next()
 
-    if (is.null(fit)) next()
+    fit <- tune_xgb_with_caret(train = data.matrix(dfl.train),
+                               y = as.numeric(y.train),
+                               grid = Grid,
+                               target = "gpp",
+                               lags = lags,
+                               initial = initial, horizon = horizon, skip = skip)
+
 
     bestTune <- fit$bestTune
     bestModel <- fit$finalModel
