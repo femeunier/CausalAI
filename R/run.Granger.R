@@ -216,15 +216,21 @@ run.Granger <- function(config.file){
                               mutate(model = cmodel,
                                      lon_lat = clon.lat))
 
-    run <- tryCatch(ml_granger_all_causes(df, dfl,
-                                          target = "gpp", lags = lags,
-                                          initial = initial, horizon = horizon,
-                                          step = step,
-                                          bestTune = bestTune),
-                    error = function(e) NULL)
+    # run <- tryCatch(ml_granger_all_causes(df, dfl,
+    #                                       target = "gpp", lags = lags,
+    #                                       initial = initial, horizon = horizon,
+    #                                       step = step,
+    #                                       bestTune = bestTune),
+    #                 error = function(e) NULL)
+    #
+    #
+    # if (is.null(run)) next()
 
-
-    if (is.null(run)) next()
+    run <- ml_granger_all_causes(df, dfl,
+                                 target = "gpp", lags = lags,
+                                 initial = initial, horizon = horizon,
+                                 step = step,
+                                 bestTune = bestTune)
 
     shap_df <- run$shap_lags %>%
       as.data.frame()

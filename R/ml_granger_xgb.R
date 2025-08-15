@@ -3,7 +3,10 @@ ml_granger_xgb <- function(dfl, target, cause, lags = 12,
                            bestTune, verbose = 0) {
   y <- dfl[[target]]
 
-  future::plan("multisession", workers = Ncores)
+  if (requireNamespace("future", quietly = TRUE)) {
+    Ncores <- as.numeric(future::availableCores())
+    future::plan("multisession", workers = Ncores)
+  }
 
   lag_cols <- grep("_L[0-9]+$", names(dfl), value = TRUE)
   X_full <- dfl[, lag_cols, drop = FALSE]
