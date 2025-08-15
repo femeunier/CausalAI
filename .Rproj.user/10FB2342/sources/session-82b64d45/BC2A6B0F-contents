@@ -115,6 +115,7 @@ run.Granger <- function(config.file){
       all.test <-
       all.SHAP <-
       data.frame()
+
   } else {
 
     df.QoF <- tryCatch(readRDS(file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS"))),
@@ -228,17 +229,19 @@ run.Granger <- function(config.file){
     elapsed <- as.numeric(difftime(Sys.time(), hour_start, units = "secs"))
 
     if (elapsed >= time2save) {
-      saveRDS(df.QoF,
-              file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS")))
-      saveRDS(all.test,
-              file.path(dest.dir,paste0("All.test.XGBoosts.Granger_",suffix,".RDS")))
-      saveRDS(all.SHAP,
-              file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS")))
-      saveRDS(all.X.test,
-              file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
 
       hour_start <- Sys.time()
 
     }
   }
+
+  saveRDS(df.QoF,
+          file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS")))
+  saveRDS(all.test,
+          file.path(dest.dir,paste0("All.test.XGBoosts.Granger_",suffix,".RDS")))
+  saveRDS(all.SHAP,
+          file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS")))
+  saveRDS(all.X.test,
+          file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
+
 }

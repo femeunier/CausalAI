@@ -2,7 +2,7 @@ write.Granger.script <- function(dir.name,
                                  file.name,
                                  config.location,
                                  cmodel,
-                                 lat.min,lat.max,lon.min,lon.max,year.min,year.max){
+                                 lat.min,lat.max,lon.min,lon.max){
 
   file <- file.path(dir.name,file.name)
 

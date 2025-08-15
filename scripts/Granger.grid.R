@@ -26,8 +26,8 @@ main.config <- list(lags = 12,
                  subsample = c(0.8)),
                time2save = 600)
 
-Global.lat.min <- -23 ; Global.lat.max <- 23 ; Delta_lat <- 5
-Global.lon.min <- -15 ; Global.lon.max <- 60 ; Delta_lon <- 5
+Global.lat.min <- 0 ; Global.lat.max <- 5 ; Delta_lat <- 5
+Global.lon.min <- 20 ; Global.lon.max <- 25 ; Delta_lon <- 5
 
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
@@ -39,6 +39,9 @@ mainconfig.file <- file.path(dir.name,"main.config.RDS")
 
 saveRDS(main.config,
         mainconfig.file)
+
+
+list_dir <- list() ; job.names <- c()
 
 for (cmodel in models){
 
@@ -54,24 +57,27 @@ for (cmodel in models){
                        "_lats",lat.min,".",lat.max,
                        "_lons",lon.min,".",lon.max)
 
-      stop()
-
       write.Granger.script(dir.name = file.path(dir.name,cmodel),
                            file.name = paste0("Rscript_",suffix,".R"),
                            config.location = mainconfig.file,
                            cmodel,
-                           lat.min,lat.max,lon.min,lon.max,year.min,year.max)
+                           lat.min,lat.max,
+                           lon.min,lon.max)
+
+
+      ED2scenarios::write_jobR(file = file.path(cdir,cjobname),
+                               nodes = 1,ppn = 24,mem = 100,walltime = 12,
+                               prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
+                               CD = "/data/gent/vo/000/gvo00074/felicien/R/",
+                               Rscript = Rscript.name)
+
+      list_dir[[suffix]] = cdir
 
     }
   }
 }
 
-
-
-
-
-###############################################################
-# Load data
-
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/Granger.grid.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
-
+dumb <- write_bash_submission(file = file.path(getwd(),
+                                               "All.Granger.sh"),
+                              list_files = list_dir,
+                              job_name = job.names)

@@ -3,7 +3,7 @@
     "path": "~/Documents/projects/CausalAI/R/run.Granger.R",
     "project_path": "R/run.Granger.R",
     "type": "r_source",
-    "hash": "4207535036",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1755249187393.0,
@@ -13,15 +13,15 @@
         "tempName": "Untitled5",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "11,28",
-        "scrollLine": "5"
+        "cursorPosition": "78,16",
+        "scrollLine": "75"
     },
     "folds": "",
-    "lastKnownWriteTime": 1755254540,
+    "lastKnownWriteTime": 1755254877,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1755254540155,
+    "last_content_update": 1755254877588,
     "read_only": false,
     "read_only_alternatives": []
 }
