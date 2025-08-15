@@ -65,11 +65,14 @@ for (cmodel in models){
                            lon.min,lon.max)
 
 
-      ED2scenarios::write_jobR(file = file.path(cdir,cjobname),
-                               nodes = 1,ppn = 24,mem = 100,walltime = 12,
+      ED2scenarios::write_jobR(file = file.path(dir.name,cmodel,
+                                                paste0("job_",suffix,".pbs")),
+                               nodes = 1,ppn = 16,mem = 100,walltime = 12,
                                prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
                                CD = "/data/gent/vo/000/gvo00074/felicien/R/",
-                               Rscript = Rscript.name)
+                               Rscript = paste0("Rscript_",suffix,".R"))
+
+      stop()
 
       list_dir[[suffix]] = cdir
 

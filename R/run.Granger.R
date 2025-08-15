@@ -145,7 +145,7 @@ run.Granger <- function(config.file){
       next()
     }
 
-    if(all(df[[y_var]] < gpp.threshold)){
+    if(all(df[[y_var]] < threshold)){
       next()
     }
 
