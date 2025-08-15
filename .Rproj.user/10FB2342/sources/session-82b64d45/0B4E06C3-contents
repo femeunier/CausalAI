@@ -49,8 +49,8 @@ write.Granger.script <- function(dir.name,
 
   write("",file=file,append=TRUE)
   write(paste0("suffix <- paste0(cmodel,",
-               "\"_lats\",",lat.min,",\".\",",lat.max,
-               ",\"_lons\",",lon.min,",\".\",",lon.max,
+               "\"_lats\",",lat.min,",\"_\",",lat.max,
+               ",\"_lons\",",lon.min,",\"_\",",lon.max,
                ")"),
         file=file,append=TRUE)
 

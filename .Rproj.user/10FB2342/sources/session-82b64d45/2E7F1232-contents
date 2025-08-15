@@ -54,8 +54,8 @@ for (cmodel in models){
       lon.min <- clon ; lon.max <- lon.min + Delta_lon
 
       suffix <- paste0(cmodel,
-                       "_lats",lat.min,".",lat.max,
-                       "_lons",lon.min,".",lon.max)
+                       "_lats",lat.min,"_",lat.max,
+                       "_lons",lon.min,"_",lon.max)
 
       write.Granger.script(dir.name = file.path(dir.name,cmodel),
                            file.name = paste0("Rscript_",suffix,".R"),

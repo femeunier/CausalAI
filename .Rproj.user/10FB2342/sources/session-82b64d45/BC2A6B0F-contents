@@ -31,8 +31,8 @@ run.Granger <- function(config.file){
   }
 
   suffix <- paste0(cmodel,
-                   "_lats",lat.min,".",lat.max,
-                   "_lons",lon.min,".",lon.max)
+                   "_lats",lat.min,"_",lat.max,
+                   "_lons",lon.min,"_",lon.max)
 
 
   CO2 <- read.table("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/global_co2_ann_1700_2024.txt") %>%
