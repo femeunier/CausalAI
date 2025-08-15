@@ -263,7 +263,7 @@ run.Granger <- function(config.file){
       saveRDS(all.X.test,
               file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS")))
       saveRDS(all.results,
-              file.path(dest.dir,paste0("All.results_",suffix,".RDS")))
+              file.path(dest.dir,paste0("All.results.Granger_",suffix,".RDS")))
 
       hour_start <- Sys.time()
 
