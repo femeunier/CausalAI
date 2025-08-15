@@ -1,0 +1,26 @@
+{
+    "id": "7741AB8A",
+    "path": "~/Documents/projects/CausalAI/outputs/Granger/CABLE-POP/Config_CABLE-POP_lats-23.-18_lons-15.-10.R",
+    "project_path": "outputs/Granger/CABLE-POP/Config_CABLE-POP_lats-23.-18_lons-15.-10.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1755252136713.0,
+    "source_on_save": false,
+    "relative_order": 10,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "0,0",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1755252471,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1755252471,
+    "read_only": false,
+    "read_only_alternatives": []
+}

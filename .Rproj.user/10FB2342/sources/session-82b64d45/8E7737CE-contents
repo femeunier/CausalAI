@@ -1,0 +1,20 @@
+# https://github.com/nicolarighetti/Granger-causality-test-with-R/blob/main/Granger-test-with-R.md
+
+set.seed(1234)
+
+ts1 <- ts(rnorm(n=5000))
+ts2 <- ts(rnorm(n=5000))
+
+lmtest::grangertest(ts1, ts2, order=3, test="F")
+
+library(dynlm)
+
+unrestricted_ts2 <- dynlm(ts2 ~ L(ts2, 1:3) + L(ts1, 1:3))
+restricted_ts2 <- dynlm(ts2 ~ L(ts2, 1:3))
+
+lmtest::waldtest(unrestricted_ts2, restricted_ts2, test="F")   
+
+
+tsDat <- ts.union(ts1, ts2) 
+tsVAR <- vars::VAR(tsDat, p = 3)
+vars::causality(tsVAR, cause = "ts1")$Granger

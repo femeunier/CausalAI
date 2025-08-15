@@ -1,0 +1,198 @@
+rm(list = ls())
+
+####################################################################"
+# Libraries
+
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(caret)
+library(xgboost)
+library(zoo)
+library(shapviz)
+library(kernelshap)
+library(SHAPforxgboost)
+
+####################################################################"
+# Load and explore data
+
+rawdata <- read.table("~/Downloads/AGB_climate_vars_table 2.txt",header = TRUE)
+
+# Worldmap of countries
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot() +
+  geom_sf(data = world,fill = NA,color = "grey") +
+  geom_tile(data = rawdata,
+            aes(x = long, y = lat,
+                fill = AGB)) +
+  scale_fill_gradient() +
+  theme_map() +
+  theme(panel.grid.major = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 24))
+
+summary(rawdata$AGB)
+
+####################################################################"
+# Fit machine learning model
+
+# Climate variables
+climate.vars <- colnames(rawdata)[colnames(rawdata) != "AGB"]
+
+# Name of the y to fit
+target.var <- c("AGB")
+
+# Machine learning settings
+xgb_trcontrol <- caret::trainControl(
+  method = "cv",
+  number = 8,
+  allowParallel = TRUE,
+  verboseIter = TRUE,
+  returnData = FALSE
+)
+
+# Hyperparameters to explore for the machine learning algorithm
+xgb_grid <- base::expand.grid(
+  list(
+    nrounds = c(100, 200),
+    max_depth = c(10, 15, 20), # maximum depth of a tree
+    colsample_bytree = seq(0.5), # subsample ratio of columns when construction each tree
+    eta = 0.1, # learning rate
+    gamma = 0, # minimum loss reduction
+    min_child_weight = 1,  # minimum sum of instance weight (hessian) needed ina child
+    subsample = 1 # subsample ratio of the training instances
+  ))
+
+# Fraction of the data that will be used for training, note (1-frac.train)/2 will be used for completely independent test
+frac.train <- 0.6
+
+# Adding a id column for each row
+cdf <- rawdata %>%
+  ungroup() %>%
+  mutate(id = 1:n())
+
+# Split the data into training/validatin/test
+ccdf <-  cdf %>%
+  mutate(group = sample(
+    c("train", "validation", "test"),
+    size = n(),
+    replace = TRUE,
+    prob = c(as.numeric(frac.train),
+             (1-as.numeric(frac.train))/2,
+             (1-as.numeric(frac.train))/2))) %>%
+  ungroup()
+
+
+train <- ccdf %>%
+  filter(group == "train") %>%
+  dplyr::select(-c(group,AGB))
+
+validation <- ccdf %>%
+  filter(group == "validation") %>%
+  dplyr::select(-c(group,AGB))
+
+test <- ccdf %>%
+  filter(group == "test") %>%
+  dplyr::select(-c(group,AGB))
+
+
+# Training data formating
+training.data <- as.matrix(train %>%
+                    dplyr::select(-id))
+training.labels <- ccdf %>%
+  filter(id %in% (train[["id"]])) %>%
+  pull(!!target.var)
+
+# Validation data formating
+validation.data <- as.matrix(validation %>%
+                               dplyr::select(-id))
+validation.labels <- ccdf %>%
+  filter(id %in% (validation[["id"]])) %>%
+  pull(!!target.var)
+
+# Test data formating
+test.data <- as.matrix(test %>%
+                         dplyr::select(-id))
+test.labels <- ccdf %>%
+  filter(id %in% (test[["id"]])) %>%
+  pull(!!target.var)
+
+# First we optimize the machine learning model hyperparameters
+xgb_model <- caret::train(
+  training.data,training.labels,
+  trControl = xgb_trcontrol,
+  tuneGrid = xgb_grid,
+  method = "xgbTree",
+  nthread = 16,
+  verbosity = 1)
+
+plot(xgb_model)
+
+# Then we rerun with the best set of hyperparameters
+# with test and validation data merged together
+xgb_best_model <- caret::train(
+  x = rbind(training.data,
+            validation.data),
+  y = c(training.labels,
+        validation.labels),
+  trControl = xgb_trcontrol,
+  tuneGrid = xgb_model$bestTune,
+  method = "xgbTree",
+  nthread = 16,
+  verbosity = 1)
+
+xgb_best_model
+
+# We add the dataset for further use later
+xgb_best_model$training.data <- training.data
+xgb_best_model$training.labels <- training.labels
+
+xgb_best_model$validation.data <- validation.data
+xgb_best_model$validation.labels <- validation.labels
+
+xgb_best_model$test.data <- test.data
+xgb_best_model$test.labels <- test.labels
+
+# Make model predictions
+predicted <- predict(xgb_best_model,
+                     ccdf[,xgb_model$finalModel$feature_names])
+
+all.predicted <- cbind(ccdf,
+                       predicted)
+
+ggplot(data = all.predicted)+
+  geom_hex(aes(x = AGB,
+               y = predicted)) +
+  theme_bw() +
+  scale_x_log10() +
+  scale_y_log10() +
+  geom_abline(slope = 1,
+              intercept = 0, color = "red",linetype = 2)
+
+# Model predictions specifically for the test data
+predicted_test <- predict(xgb_best_model,
+                          test.data[,xgb_best_model$finalModel$feature_names])
+
+all_test <- bind_cols(test.data,
+                      pred = predicted_test,
+                      obs = xgb_best_model$test.labels)
+
+ggplot(data = all_test)+
+  geom_hex(aes(x = pred,
+               y = obs)) +
+  theme_bw() +
+  scale_x_log10() +
+  scale_y_log10() +
+  geom_abline(slope = 1,
+              intercept = 0, color = "red",linetype = 2)
+
+shap_long <- shap.prep(xgb_model = xgb_best_model$finalModel,
+                       X_train = training.data)
+shap.plot.summary(shap_long)
+
+s <- kernelshap(xgb_best_model$finalModel,
+                X = as.matrix(rawdata)[,xgb_best_model$finalModel$feature_names])
+sv <- shapviz(s)
+sv_dependence(sv,
+              v = xgb_best_model$finalModel$feature_names)

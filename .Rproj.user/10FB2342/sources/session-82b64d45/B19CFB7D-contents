@@ -1,0 +1,7 @@
+rm(list = ls())
+
+CausalAI::load.everything()
+
+config <- readRDS("./outputs/Granger//main.config.RDS")
+
+lat.min <- -23

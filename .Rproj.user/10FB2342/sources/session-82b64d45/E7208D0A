@@ -1,0 +1,27 @@
+{
+    "id": "E7208D0A",
+    "path": "~/Documents/projects/CausalAI/scripts/XGBoost.grid.R",
+    "project_path": "scripts/XGBoost.grid.R",
+    "type": "r_source",
+    "hash": "1392350422",
+    "contents": "",
+    "dirty": false,
+    "created": 1754945251179.0,
+    "source_on_save": false,
+    "relative_order": 8,
+    "properties": {
+        "tempName": "Untitled5",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "238,12",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1755017460,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1755017460830,
+    "read_only": false,
+    "read_only_alternatives": []
+}

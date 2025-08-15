@@ -1,0 +1,133 @@
+rm(list = ls())
+
+library(dplyr)
+library(ncdf4)
+library(ncdf4.helpers)
+library(reshape2)
+library(raster)
+library(tidyr)
+library(ggplot2)
+library(sf)
+
+sites <- data.frame(lat = 0.75, lon = 24.25) %>%
+  mutate(lon_lat = paste0(lon,"_",lat))
+
+years <- 1901:2023
+
+vars <- c("pre","tmp","tmin","tmax",
+          "dlwrf","dswrf","spfh","pres","ugrd","vgrd")
+
+# dir <- "/home/femeunier/Documents/projects/TrENDY.analyses/data/inputs/"
+dir <- "/data/gent/vo/000/gvo00074/felicien/TrENDY/inputs"
+
+prefix <- rev(c("2.1","2.2","2.3","2.3.1","2.4","2.5"))
+
+veryfirst <- TRUE
+
+all.years <- data.frame()
+
+for (cyear in years){
+
+  print(paste0(cyear))
+
+  temp.array <- array(data = NA,
+                      dim = c(nrow(sites),
+                              nrow(sites),
+                              1460,
+                              length(vars)))
+
+  ivar = 1
+  for (cvar in vars){
+
+    print(paste0("- ",cvar))
+
+    i = 1 ; zip.file.exist = FALSE
+    while (i <= length(prefix) & !zip.file.exist){
+
+      zip.file <- file.path(dir,
+                            paste0("crujra.v",prefix[i],".5d.",cvar,".",cyear,".365d.noc.nc.gz"))
+
+      zip.file.exist <- file.exists(zip.file)
+
+      i = i + 1
+    }
+
+    if (!zip.file.exist){
+      warning(paste0("Zip file not found:", cvar," - ",cyear))
+      next()
+    }
+
+    system2("gunzip",
+            paste("-k",zip.file))
+
+    nc.file <- file.path(dir,
+                         paste0("crujra.v",prefix[i-1],".5d.",cvar,".",cyear,".365d.noc.nc"))
+
+    nc <- nc_open(nc.file)
+
+    if (veryfirst){
+      lats <- ncvar_get(nc,"lat")
+      lons <- ncvar_get(nc,"lon")
+
+      lons_lats <- expand.grid(lons,lats) %>%
+        rename(lon = Var1, lat = Var2) %>%
+        mutate(lon_lat = paste0(lon,"_",lat))
+
+      lons_lats.select <- lons_lats %>%
+        filter(lon_lat %in% sites[["lon_lat"]]) %>%
+        mutate(lat.pos = match(lat,lats),
+               lon.pos = match(lon,lons))
+
+      veryfirst <- FALSE
+    }
+
+    if (ivar == 1){
+      times <- (as.character(ncdf4.helpers::nc.get.time.series(f = nc)))
+    }
+
+    data <- ncvar_get(nc,cvar)
+
+    temp.array[,,,ivar] <-  data[lons_lats.select[["lon.pos"]],
+                                 lons_lats.select[["lat.pos"]],]
+    ivar <- ivar + 1
+
+    system2("rm",
+            nc.file)
+  }
+
+  cdf <- reshape2::melt(temp.array) %>%
+    rename(lon = Var1,
+           lat = Var2,
+           time = Var3,
+           var = Var4) %>%
+    mutate(lon = lons_lats.select[["lon"]][lon],
+           lat = lons_lats.select[["lat"]][lat],
+           time = times[time],
+           variable = vars[var]) %>%
+    mutate(lon_lat = paste0(lon,"_",lat)) %>%
+    dplyr::filter(lon_lat %in% lons_lats.select[["lon_lat"]]) %>%
+    dplyr::select(-c(var)) %>%
+    arrange(time) %>%
+    ungroup() %>%
+    distinct()
+
+
+  if (cyear == years[1]){
+    all.years <- cdf %>%
+      pivot_wider(names_from = variable,
+                  values_from = value)
+  } else{
+    all.years <- bind_rows(all.years,
+                           cdf %>%
+                             pivot_wider(names_from = variable,
+                                         values_from = value))
+  }
+
+
+}
+
+saveRDS(all.years,
+        "./outputs/Timeseries.regrowth.Yangambi.RDS")
+
+# scp /home/femeunier/Documents/projects/Yoko.regrowth/data/data2share/sites.locations.csv hpc:/data/gent/vo/000/gvo00074/felicien/R/data/
+# scp /home/femeunier/Documents/projects/Yoko.regrowth/scripts/extract.drivers.CRUJRA.YGB.R hpc:/data/gent/vo/000/gvo00074/felicien/R/

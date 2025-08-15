@@ -1,0 +1,153 @@
+rm(list = ls())
+
+library(brms)
+library(dplyr)
+library(ggplot2)
+
+data <- read.table("~/Downloads/tsld_agb_all_distu_classes_row51 1.txt")
+colnames(data) <- c("freq","tsld","AGB","lon",'lat')
+
+#  tsld keys: [1:[0-6), 2:[6-11), 3:[11-16), 4:[16-21), 5:(21-26], 6:[26-30), 7:30+]
+new.ages <- c(3,8,14,18,23,28,35)
+data <- data %>%
+  mutate(age = new.ages[tsld])
+
+Nchains <- 2
+Niter <- 2000
+warmup <- Niter/2
+thin <- 1
+refresh <- max(1,round(Niter/100))
+control.list <- list(adapt_delta = 0.95,
+                     max_treedepth = 15)
+
+priors <- c(
+  set_prior("normal(300,50)", nlpar = "AGBmax", lb = 0),
+  set_prior("normal(0.05, 0.02)", nlpar = "b", lb = 0),
+  set_prior("normal(1, 0.5)", nlpar = "k", lb = 0))
+
+data.spld <- data %>%
+  group_by(age,freq,tsld) %>%
+  sample_frac(size = 0.001) %>%
+  ungroup()
+
+data.sum <- data.spld %>%
+  group_by(freq,age) %>%
+  summarise(AGB.m = mean(AGB,na.rm = TRUE),
+            .groups = "keep")
+
+data.sum.frs <- data.spld %>%
+  group_by(age) %>%
+  summarise(AGB.m = mean(AGB,na.rm = TRUE),
+            .groups = "keep")
+
+ggplot(data.spld) +
+  geom_boxplot(aes(x = as.factor(age), y = AGB)) +
+  facet_wrap(~ as.factor(freq)) +
+  theme_bw()
+
+ggplot(data.spld) +
+  geom_boxplot(aes(x = as.factor(age), y = AGB)) +
+  theme_bw()
+
+ggplot() +
+  geom_line(data = data.sum,
+            aes(x = age, y = AGB.m,
+                color = as.factor(freq))) +
+  geom_line(data = data.sum.frs,
+            aes(x = age, y = AGB.m),
+            color = "black") +
+  theme_bw()
+
+cfit <- brm(formula =  bf(
+  AGB ~ AGBmax * (1 - exp(-(b * age)^k)),
+  AGBmax ~ 1,
+  b ~ 1,
+  k ~ 1,
+  nl = TRUE),
+
+  data=data.spld,
+  cores = Nchains,
+  prior = priors,
+  init = "random",
+  control = control.list,
+  chains = Nchains,
+  # threads = threading(floor(parallel::detectCores()/Nchains)/2),
+  iter = Niter,
+  refresh = refresh,
+  warmup = warmup,
+  backend = "rstan",
+  silent = 0)
+
+cfit
+plot(cfit)
+
+pp_check(cfit, ndraws = 10)
+pp_check(cfit, ndraws = 10, type = "scatter_avg")        # mean of y_rep vs y
+pp_check(cfit, ndraws = 10, type = "stat_2d")            # 2D density y vs y_rep
+
+draws <- as_draws_df(cfit)
+
+ages <- seq(0,50,length.out = 100)
+A0 <- predict(cfit,
+              newdata = data.frame(age = ages),
+              re_formula = NA)
+plot(ages,A0[,1],type = "l")
+fitted_vals <- fitted(cfit,
+                      ndraws = 100)
+
+res <- fitted_vals[,"Estimate"] - data.spld$AGB
+res_df <- data.frame(
+  fitted = fitted_vals[, "Estimate"],
+  observed = data.spld$AGB,
+  residual = res,
+  age = data.spld$age,
+  freq = data.spld$freq)
+
+ggplot(res_df,
+       aes(x = fitted, y = observed)) +
+  geom_point(alpha = 0.3, size = 0.1) +
+  geom_smooth(method = "loess") +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed") +
+  scale_x_log10() +  # If dbh is log-scaled in the model
+  scale_y_log10() +  # If dbh is log-scaled in the model
+  labs(x = "fitted",y = "observed") +
+  theme_bw()
+
+ggplot(res_df,
+       aes(x = fitted, y = residual)) +
+  geom_point(alpha = 0.3, size = 0.1) +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_bw()
+
+################################################################
+# Compare models
+
+cfit_freq <- brm(formula =  bf(
+  AGB ~ AGBmax * (1 - exp(-(b * age)^k)),
+  AGBmax ~ 1 + freq,
+  b ~ 1 + freq,
+  k ~ 1 + freq,
+  nl = TRUE),
+
+  data=data.spld %>%
+    mutate(freq = factor(freq)),
+  cores = Nchains,
+  prior = priors,
+  init = "random",
+  control = control.list,
+  chains = Nchains,
+  # threads = threading(floor(parallel::detectCores()/Nchains)/2),
+  iter = Niter,
+  refresh = refresh,
+  warmup = warmup,
+  backend = "rstan",
+  silent = 0)
+plot(cfit_freq)
+
+loo_compare(add_criterion(cfit, "waic"),
+            add_criterion(cfit_freq, "waic"),
+            criterion = "waic")
+
+

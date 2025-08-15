@@ -1,0 +1,10 @@
+rm(list = ls())
+
+CausalAI::load.everything()
+
+config <- readRDS("./outputs/main.config.RDS")
+
+lat.min <- 0 
+lat.max <- 5
+lon.min <- 0
+lon.max <- 5

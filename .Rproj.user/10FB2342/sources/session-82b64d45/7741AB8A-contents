@@ -1,0 +1,28 @@
+rm(list = ls())
+
+CausalAI::load.everything()
+
+config <- readRDS("./outputs/Granger//main.config.RDS")
+
+lat.min <- -23
+lat.max <- -18
+lon.min <- -15
+lon.max <- -10
+
+cmodel <- "CABLE-POP"
+config[["cmodel"]] <- cmodel
+
+config[["lat.min"]] <- lat.min
+config[["lat.max"]] <- lat.max
+config[["lon.min"]] <- lon.min
+config[["lon.max"]] <- lon.max
+
+dest.dir <- paste0("./outputs/Granger//CABLE-POP")
+config[["dest.dir"]] <- dest.dir
+
+suffix <- paste0(cmodel,"_lats",-23,".",-18,"_lons",-15,".",-10)
+config.file <- file.path(dest.dir, paste0("config_",suffix,".RDS"))
+
+dir.create(dest.dir, showWarnings = FALSE)
+saveRDS(config,config.file)
+run.Granger(config.file)
