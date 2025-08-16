@@ -7,7 +7,7 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
 
-df.QoF <- all.test <- all.SHAP <-
+df.QoF <- all.test <- all.SHAP <- all.results <-
   data.frame()
 
 for (cmodel in models){
@@ -65,6 +65,25 @@ for (cmodel in models){
                                   model_lon_lat = paste0(model,"_",lon_lat)))
 
   }
+
+
+  # results
+  files <- list.files(file.path("./outputs/Granger/",cmodel),
+                      pattern = "^All.results.*Granger.*.RDS",
+                      full.names = TRUE)
+
+  for (cfile in files){
+    cresult <- readRDS(cfile)
+
+    if (nrow(cresult) == 0) next()
+
+    all.results <- bind_rows(all.results,
+                             cresult %>%
+                               mutate(lon = as.numeric(sub("\\_.*", "", lon_lat)),
+                                   lat = as.numeric(sub(".*\\_", "", lon_lat)),
+                                   model_lon_lat = paste0(model,"_",lon_lat)))
+
+  }
 }
 
 saveRDS(df.QoF,
@@ -73,6 +92,8 @@ saveRDS(all.test,
         "./outputs/All.test.Granger.RDS")
 saveRDS(all.SHAP,
         "./outputs/All.SHAP.Granger.RDS")
+saveRDS(all.results,
+        "./outputs/All.results.Granger.RDS")
 
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/Analysis.Granger.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 

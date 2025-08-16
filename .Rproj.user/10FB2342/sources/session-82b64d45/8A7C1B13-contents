@@ -55,6 +55,14 @@ ggplot(data = df.QoF %>%
   geom_boxplot(aes(x = model, y = Rsq)) +
   theme_bw()
 
+ggplot(df.QoF,
+       aes(x = mean.y,
+           y = Rsq)) +
+  geom_hex() +
+  stat_smooth(aes(color = model),
+              method = "lm",se = FALSE) +
+  theme_bw()
+
 ################################################################################
 
 system2("rsync",
@@ -88,7 +96,7 @@ df.SHAP <- readRDS("./outputs/All.SHAP.Granger.RDS")
 
 df.SHAP.sum <- df.SHAP %>%
   group_by(model,model_lon_lat,lon_lat,lon,lat,cause,target) %>%
-  summarise(SHAP.m = sum(mean_shap,na.rm = TRUE),
+  summarise(SHAP.m = abs(sum(mean_shap,na.rm = TRUE)),
             .groups = "keep") 
 
 ggplot(data = df.SHAP %>%
@@ -147,3 +155,46 @@ ggplot(data = df.SHAP.max2 %>%
   scale_x_continuous(limits = c(-15,60)) +
   theme_map() +
   theme(legend.position = "bottom")
+
+################################################################################
+
+system2("rsync",
+        c("-avz",
+          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.results.Granger.RDS",
+          "./outputs/"))
+
+All.results.Granger <- readRDS("./outputs/All.results.Granger.RDS")
+
+All.results.Granger.signif <- All.results.Granger %>%
+  mutate(signif = case_when(p_value < 0.05 ~ TRUE,
+                            TRUE ~ FALSE)) %>%
+  filter(signif)
+
+ggplot(data = All.results.Granger.signif %>%
+         filter(model_lon_lat %in% models.lons.lats)) +
+  geom_raster(aes(x = lon, y = lat,
+                  fill = improvement),) +
+  geom_sf(data = world,fill = NA, color = "grey17") +  
+  
+  geom_vline(xintercept = seq(-15,60,10)) +
+  geom_hline(yintercept = seq(-23,23,10)) +
+  facet_wrap(~ model) +
+  scale_y_continuous(limits = c(-1,1)*23.5) +
+  scale_x_continuous(limits = c(-15,60)) +
+  theme_map() +
+  theme(legend.position = "bottom")
+
+All.results.Granger %>%
+  filter(model_lon_lat == model_lon_lat[1])
+df.SHAP.max %>%
+  ungroup() %>%
+  filter(model_lon_lat == model_lon_lat[1])
+
+All.results.Granger %>%
+  filter(model == "CLM6.0") %>%
+  group_by(lat) %>%
+  summarise(N = n()) %>%
+  filter(N > 1) %>%
+  pull(lat) %>%
+  unique() %>%
+  sort()

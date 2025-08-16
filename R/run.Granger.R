@@ -51,8 +51,8 @@ run.Granger <- function(config.file){
     xout = monthly_df$year_decimal)$y
 
   climate <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/grid.",cmodel,".JRA.v13.RDS")) %>%
-    mutate(lat = round(lat,digits = 3),
-           lon = round(lon,digits = 3)) %>%
+    mutate(lat = round(lat,digits = 2),
+           lon = round(lon,digits = 2)) %>%
     left_join(monthly_df,
               by = c("year","month")) %>%
     ungroup()
@@ -63,16 +63,16 @@ run.Granger <- function(config.file){
            month = month(time)) %>%
     dplyr::select(lon,lat,year,month,
                   top.sml,tot.sml) %>%
-    mutate(lat = round(lat,digits = 3),
-           lon = round(lon,digits = 3)) %>%
+    mutate(lat = round(lat,digits = 2),
+           lon = round(lon,digits = 2)) %>%
     ungroup() %>%
     mutate(lon = case_when(lon > 180 ~ lon - 360,
                            TRUE ~ lon))
 
   CC <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Trendy.",cmodel,".S2.CC.pantropical.v13.RDS")) %>%
     dplyr::select(lon,lat,year,month,gpp) %>%
-    mutate(lat = round(lat,digits = 3),
-           lon = round(lon,digits = 3)) %>%
+    mutate(lat = round(lat,digits = 2),
+           lon = round(lon,digits = 2)) %>%
     ungroup()
 
   # Merge all datasets
