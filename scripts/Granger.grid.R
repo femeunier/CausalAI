@@ -8,9 +8,12 @@ library(purrr)
 ###############################################################
 # Settings
 
+global.suffix <- "Amazon"
+
 main.config <- list(lags = 12,
                initial = 240,
                horizon = 12,
+               global.suffix = global.suffix,
                step = 12,
                skip = 11,
                threshold = 0.1,
@@ -88,12 +91,13 @@ for (cmodel in models){
 
       suffix <- paste0(cmodel,
                        "_lats",lat.min,"_",lat.max,
-                       "_lons",lon.min,"_",lon.max)
+                       "_lons",lon.min,"_",lon.max,
+                       "_",global.suffix)
 
       write.Granger.script(dir.name = file.path(dir.name,cmodel),
                            file.name = paste0("Rscript_",suffix,".R"),
                            config.location = mainconfig.file,
-                           cmodel,
+                           cmodel,suffix = global.suffix,
                            lat.min,lat.max,
                            lon.min,lon.max)
 
