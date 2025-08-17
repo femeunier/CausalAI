@@ -3,6 +3,7 @@ run.Granger <- function(config.file){
   config <- readRDS(config.file)
 
   cmodel <- config[["cmodel"]]
+  global.suffix <- config[["global.suffix"]]
   lags <- config[["lags"]]
   initial <- config[["initial"]]
   horizon <- config[["horizon"]]
@@ -32,7 +33,8 @@ run.Granger <- function(config.file){
 
   suffix <- paste0(cmodel,
                    "_lats",lat.min,"_",lat.max,
-                   "_lons",lon.min,"_",lon.max)
+                   "_lons",lon.min,"_",lon.max,
+                   "_",global.suffix)
 
 
   CO2 <- read.table("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/global_co2_ann_1700_2024.txt") %>%

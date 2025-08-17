@@ -30,7 +30,7 @@ main.config <- list(lags = 12,
                time2save = 600)
 
 Global.lat.min <- -23 ; Global.lat.max <- 23 ; Delta_lat <- 10
-Global.lon.min <- -15 ; Global.lon.max <- 60 ; Delta_lon <- 10
+Global.lon.min <- -90 ; Global.lon.max <- -35 ; Delta_lon <- 10
 
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
