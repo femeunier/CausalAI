@@ -71,6 +71,15 @@ for (iyear in seq(1,length(years))){
     dumb <- file.remove(tmp.f)
 
     all.raster.cr <- (crop(craster,e))
+
+    writeRaster(all.raster.cr/1000*
+                  ifelse(lubridate::leap_year(paste0(year,"/01/01")),
+                         366,365),
+                file.path(dir,
+                          paste0('GPP.GOSIF.',year,".",sprintf("%02d",month),".tif")),
+                options=c('TFW=YES'),
+                overwrite = TRUE)
+
     cdf <- as.data.frame(all.raster.cr, xy = TRUE) %>%
       rename(lon = x,
              lat = y,
@@ -93,7 +102,4 @@ for (iyear in seq(1,length(years))){
   }
 }
 
-saveRDS(all.df,
-        file.path(dir,paste0("GOSIF.GPP.ts.RDS")))
-
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/download.GOSIF.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/Download.GOSIF.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

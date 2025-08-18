@@ -12,16 +12,12 @@ library(raster)
 first <- TRUE
 SF <- 0.001
 
-dir <- "/home/femeunier/Downloads/NIR.GPP/"
+e <- extent(-180,180,-25,25)
+
+dir <- "/data/gent/vo/000/gvo00074/felicien/GPP_data/NIR.GPP/"
 
 all.df <- data.frame()
 for (cyear in seq(1982,2018)){
-
-  czipfile <- file.path(dir,paste0(cyear,".zip"))
-  system2("unzip",
-          c(czipfile,"-d",
-            dir))
-
   for (cmonth in seq(1,12)){
 
     file <- file.path(dir,cyear,cfile <- paste0("NIRv.GPP.",cyear,sprintf("%02d",cmonth),".v1.nc"))
@@ -30,85 +26,25 @@ for (cyear in seq(1982,2018)){
 
     if (!file.exists(file)){next()}
 
-    nc <- nc_open(file)
-
-    if (first){
-      lats <- ncvar_get(nc,"latitude")
-      lons <- ncvar_get(nc,"longitude")
-      first <- FALSE
-    }
-
     Ndays <- as.numeric(days_in_month(paste0(cyear,
                                              "/",
                                              sprintf("%02d",cmonth),
                                              "/01")))
 
-    GPP <- melt(ncvar_get(nc,"GPP")) %>%
-      rename(lat = Var1,
-             lon = Var2) %>%
-      mutate(lat = lats[lat],
-             lon = lons[lon]) %>%
+    GPP <- raster(file)
+    GPP[GPP == -9999] <- NA
+    GPP <- GPP*SF/Ndays
 
-      mutate(value = case_when(value != -9999 ~ value* SF,
-                               TRUE ~ NA)) # gC/m²/d
-
-
-    craster <- raster::aggregate(raster(suppressWarnings(SpatialPixelsDataFrame(points = GPP[c("lon","lat")],
-                                                                                data = GPP["value"],
-                                                                                tolerance = 0.01))),
-                                 10)
-
-    cdf <- as.data.frame(craster,xy = TRUE) %>%
-      rename(lat = y,
-             lon = x) %>%
-      mutate(year = cyear,
-             month = cmonth) %>%
-      filter(!is.na(value)) %>%
-      filter(abs(lat) <= 30)
-
-    all.df <- bind_rows(all.df,
-                        cdf)
+    writeRaster(crop(GPP,e)/1000* ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
+                                        366,365),
+                file.path(dir,
+                          paste0('GPP.NIR.',cyear,
+                                 ".",sprintf("%02d",cmonth),".tif")),
+                options=c('TFW=YES'),
+                overwrite = TRUE)
 
   }
-
-  system2("rm",
-          c("-rf",
-            file.path(dir,cyear)))
 }
 
-saveRDS(all.df,
-        "./outputs/NIR.GPP.RDS")
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/Download.NIR.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 
-world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-
-ggplot(data = cdf) +
-  geom_tile(aes(x=lon,y = lat,
-                fill = value),alpha = 1) +
-  geom_sf(data = world,fill = NA, color = "grey") +
-  # geom_sf(data = Amazon.shp,fill = NA, color = "black") +
-  # coord_sf(xlim = c(-85, -30), ylim = c(-25, 10), expand = FALSE) +
-  # scale_fill_gradient2(limits = c(-10,5)*1,
-  #                      oob = scales::squish,
-  #                      midpoint = 0,
-  #                      low = "darkred",mid = "grey",high = "darkgreen") +
-  labs(x = "",y = "") +
-  theme_bw()
-
-all.df.sum <- all.df %>%
-  mutate(basin = case_when(lon <= 0 ~ "Amazon",
-                           lon <= 50 ~ "Congo",
-                           TRUE ~ "Else")) %>%
-  group_by(basin,year,month) %>%
-  summarise(gpp.m = mean(value),
-            .groups = "keep") %>%
-  mutate(time = year + (month - 1/2)/12)
-
-ggplot(data = all.df.sum %>%
-         filter(basin != "Else"),
-       aes(x = time,
-           y = gpp.m,
-           color = basin)) +
-  geom_line() +
-  stat_smooth(method = "lm",
-              se = FALSE) +
-  theme_bw()

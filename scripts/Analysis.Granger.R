@@ -18,8 +18,10 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    cQoF <- readRDS(cfile)
+    cQoF <- tryCatch(readRDS(cfile),
+                     error = function(e) NULL)
 
+    if (is.null(cQoF)) next()
     if (nrow(cQoF) == 0) next()
 
     df.QoF <- bind_rows(df.QoF,
@@ -36,8 +38,10 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    call.test <- readRDS(cfile)
+    call.test <- tryCatch(readRDS(cfile),
+                          error = function(e) NULL)
 
+    if (is.null(call.test)) next()
     if (nrow(call.test) == 0) next()
 
     all.test <- bind_rows(all.test,
@@ -54,8 +58,10 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    cSHAP <- readRDS(cfile)
+    cSHAP <- tryCatch(readRDS(cfile),
+                      error = function(e) NULL)
 
+    if (is.null(cSHAP)) next()
     if (nrow(cSHAP) == 0) next()
 
     all.SHAP <- bind_rows(all.SHAP,
@@ -73,8 +79,10 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    cresult <- readRDS(cfile)
+    cresult <- tryCatch(readRDS(cfile),
+                        error = function(e) NULL)
 
+    if (is.null(cresult)) next()
     if (nrow(cresult) == 0) next()
 
     all.results <- bind_rows(all.results,

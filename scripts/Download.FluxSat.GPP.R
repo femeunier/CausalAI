@@ -4,6 +4,7 @@ library(ncdf4)
 library(dplyr)
 library(ggplot2)
 library(reshape2)
+library(raster)
 
 all.files <- read.table("allFluxSatLinks.txt",
                         header = FALSE)[[1]]
@@ -27,9 +28,18 @@ for (ifile in seq(1,length(all.files))){
 
     GPP.month <- readRDS(op.file)
 
-    GPP.IFL <- GPP.month %>%
-      left_join(IFL,
-                by = c("lon","lat","lon.lat"))
+    if (nrow(GPP.month) == 0) next()
+
+    cr <- rasterFromXYZ(GPP.month[,c("lon","lat","value")] %>%
+                          group_by()) /1000*
+      ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
+             366,365)
+
+    writeRaster(cr,
+                file.path(dest.dir,
+                          paste0('GPP.FLUXSAT.',cyear,".",sprintf("%02d",cmonth),".tif")),
+                options=c('TFW=YES'),
+                overwrite = TRUE)
 
 
   } else {
@@ -90,5 +100,4 @@ for (ifile in seq(1,length(all.files))){
   }
 }
 
-
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/download.FluxSat.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/Download.FluxSat.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

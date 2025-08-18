@@ -33,7 +33,10 @@ main.config <- list(lags = 12,
                time2save = 600)
 
 Global.lat.min <- -23 ; Global.lat.max <- 23 ; Delta_lat <- 10
+
 Global.lon.min <- -90 ; Global.lon.max <- -35 ; Delta_lon <- 10
+Global.lon.min <- -15 ; Global.lon.max <- 60 ; Delta_lon <- 10
+
 
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
@@ -41,7 +44,8 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
 
 dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
-mainconfig.file <- file.path(dir.name,"main.config.RDS")
+mainconfig.file <- file.path(dir.name,
+                             paste0("main.config.",global.suffix,".RDS"))
 
 saveRDS(main.config,
         mainconfig.file)
@@ -54,7 +58,7 @@ Nsim.max <- 50
 
 for (cmodel in models){
 
-  print(cmodel)
+  print(paste0(cmodel,"-",global.suffix))
 
   new.job.file <- TRUE
   init <- TRUE
@@ -97,7 +101,8 @@ for (cmodel in models){
       write.Granger.script(dir.name = file.path(dir.name,cmodel),
                            file.name = paste0("Rscript_",suffix,".R"),
                            config.location = mainconfig.file,
-                           cmodel,suffix = global.suffix,
+                           cmodel,
+                           global.suffix = global.suffix,
                            lat.min,lat.max,
                            lon.min,lon.max)
 
