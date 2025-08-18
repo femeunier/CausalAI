@@ -52,7 +52,7 @@ write.Granger.script <- function(dir.name,
   write(paste0("suffix <- paste0(cmodel,",
                "\"_lats\",",lat.min,",\"_\",",lat.max,
                ",\"_lons\",",lon.min,",\"_\",",lon.max,
-               ",\"_\",","\"",global.suffix,,"\"",")"),
+               ",\"_\",","\"",global.suffix,"\"",")"),
         file=file,append=TRUE)
 
   write(paste0("config.file <- file.path(dest.dir, paste0(\"config_\",suffix,\".RDS\"))"),
