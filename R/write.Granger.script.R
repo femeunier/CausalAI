@@ -12,11 +12,6 @@ write.Granger.script <- function(dir.name,
   write("CausalAI::load.everything()",file=file,append=TRUE)
   write("",file=file,append=TRUE)
 
-  raster.grid <- config[["raster.grid"]]
-  SWC.location <- config[["SWC.location"]]
-  CC.location <- config[["CC.location"]]
-  climate.location <- config[["climate.location"]]
-
   write(paste0("config <- readRDS(\"",
                config.location,
                "\")"),file=file,append=TRUE)

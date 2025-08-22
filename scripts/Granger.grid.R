@@ -124,7 +124,7 @@ for (cmodel in models){
                          config.location = modelconfig.file,
                          coord.location = location.file,
                          cmodel,
-                         global.suffix = suffix)
+                         suffix = suffix)
 
     cjobname <- paste0("job_",suffix,".pbs")
     ED2scenarios::write_jobR(file = file.path(dir.name,cmodel,cjobname),
