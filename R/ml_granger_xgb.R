@@ -94,6 +94,8 @@ ml_granger_xgb <- function(dfl, target, cause, lags = 12,
     ) %>% arrange(lag)
   }
 
+  future::plan("sequential")   # shuts down all multisession workers
+
   list(improvement = improvement, p_value = pval, dm_stat = stat,
        rmse_full = rmse_full, rmse_reduced = rmse_red,
        shap_lag_summary = shap_summary)

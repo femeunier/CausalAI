@@ -33,11 +33,6 @@ run.Granger <- function(config.file){
 
   dest.dir <- config[["dest.dir"]]
 
-  if (requireNamespace("future", quietly = TRUE)) {
-    Ncores <- as.numeric(future::availableCores())
-    future::plan("multisession", workers = Ncores)
-  }
-
   CO2 <- read.table("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/global_co2_ann_1700_2024.txt") %>%
     rename(year = V1,
            CO2 = V2)

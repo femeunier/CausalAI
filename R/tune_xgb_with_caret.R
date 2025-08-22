@@ -13,6 +13,12 @@ tune_xgb_with_caret <- function(train,
                                 )) {
   # dfl <- make_lags(df, max_lag = lags)
   # y <- dfl[[target]]
+
+  if (requireNamespace("future", quietly = TRUE)) {
+    Ncores <- as.numeric(future::availableCores())
+    future::plan("multisession", workers = Ncores)
+  }
+
   train <- train[, grep("_L[0-9]+$", colnames(train)), drop = FALSE]  # only lagged features
 
   dfx <- if (is.matrix(train)) as.data.frame(train) else train
@@ -62,6 +68,8 @@ tune_xgb_with_caret <- function(train,
     metric = "RMSE",
     verbosity = 1,
     nthread = 16)
+
+  future::plan("sequential")
 
   fit  # data.frame with tuned params incl. nrounds
 }
