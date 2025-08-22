@@ -16,17 +16,20 @@ for (cyear in years){
 
   file <- file.path(dest_dir,paste0("SMs_",cyear,"_GLEAM_v4.2a_MO.nc"))
   r <- stack(file)
-  names(r) <- "GLEAM_SMs"
 
   for (cmonth in months){
 
     print(paste0(cyear,"-",cmonth))
 
-    writeRaster(crop(r[[cmonth]],e),
+    cr <- crop(r[[cmonth]],e)
+    names(cr) <- "GLEAM_SMs"
+
+    writeRaster(cr,
                 file.path(dest_dir,
-                          paste0("GLEAM_SMs_",cyear,".",sprintf("%02d",cmonth),".tif")),
-                options=c('TFW=YES'),
-                overwrite = TRUE)
+                              paste0("GLEAM_SMs_",cyear,"_",sprintf("%02d",cmonth),".tif")),
+                overwrite = TRUE,
+                wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
   }
 }
 

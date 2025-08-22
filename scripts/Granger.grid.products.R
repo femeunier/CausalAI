@@ -98,6 +98,8 @@ for (iproduct in seq(1,length(products))){
   product.config[["CC.location"]] <- file.path(main.dir,
                                              dirs[iproduct],paste0("GPP.",cproduct))
 
+  product.config[["dest.dir"]] <- file.path(dir.name,cproduct)
+
   productconfig.file <- file.path(dir.name,cproduct,
                                 paste0("config.",cproduct,".RDS"))
 
