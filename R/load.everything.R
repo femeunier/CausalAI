@@ -17,5 +17,6 @@ load.everything <- function(){
   library(stringr)
   library(purrr)
   library(CausalAI)
+  library(terra)
 
 }

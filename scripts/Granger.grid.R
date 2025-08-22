@@ -22,6 +22,7 @@ main.config <- list(lags = 12,
                     skip = 11,
                     threshold = 0.1,
                     restart = TRUE,
+                    climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
 
                     x_var = c("tmp","tmin","tmax",
                               "dswrf","VPD","CO2",
@@ -87,8 +88,6 @@ saveRDS(main.config,
         mainconfig.file)
 
 list_dir <- list() ; job.names <- c()
-
-climate.location <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate"
 
 for (cmodel in models){
 
