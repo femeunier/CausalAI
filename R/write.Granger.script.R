@@ -3,7 +3,7 @@ write.Granger.script <- function(dir.name,
                                  config.location,
                                  coord.location,
                                  cmodel,
-                                 global.suffix = ""){
+                                 suffix = ""){
 
   file <- file.path(dir.name,file.name)
 
@@ -12,20 +12,24 @@ write.Granger.script <- function(dir.name,
   write("CausalAI::load.everything()",file=file,append=TRUE)
   write("",file=file,append=TRUE)
 
+  raster.grid <- config[["raster.grid"]]
+  SWC.location <- config[["SWC.location"]]
+  CC.location <- config[["CC.location"]]
+  climate.location <- config[["climate.location"]]
+
   write(paste0("config <- readRDS(\"",
                config.location,
                "\")"),file=file,append=TRUE)
-  write("",file=file,append=TRUE)
 
   write(paste0("lons_lats <- readRDS(\"",
                coord.location,
                "\")"),file=file,append=TRUE)
 
-  write("",file=file,append=TRUE)
-
   write(paste0("dest.dir <- paste0(\"",dir.name,"\")"),
         file=file,append=TRUE)
-  write(paste0("config[[\"","dest.dir","\"","]] <- dest.dir"),
+
+  write("",file=file,append=TRUE)
+  write(paste0("config[[\"","lons_lats","\"","]] <- lons_lats"),
         file=file,append=TRUE)
 
   write(paste0("config.file <- file.path(dest.dir, paste0(\"config_\",suffix,\".RDS\"))"),

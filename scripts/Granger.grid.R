@@ -86,7 +86,6 @@ mainconfig.file <- file.path(dir.name,
 saveRDS(main.config,
         mainconfig.file)
 
-
 list_dir <- list() ; job.names <- c()
 
 climate.location <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate"
@@ -97,8 +96,15 @@ for (cmodel in models){
 
   dir.create(file.path(dir.name,cmodel),showWarnings = FALSE)
 
-  SWC.location <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
-  CC.location <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
+  model.config <- main.config
+  model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
+  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
+
+  modelconfig.file <- file.path(dir.name,cmodel,
+                                paste0("config.",cmodel,".RDS"))
+
+  saveRDS(model.config,
+          modelconfig.file)
 
   compt <- 1
   for (istart in seq(1,Ntot.run,Nrun.max.per.job)){
@@ -115,10 +121,10 @@ for (cmodel in models){
 
     write.Granger.script(dir.name = file.path(dir.name, cmodel),
                          file.name = paste0("Rscript_",suffix,".R"),
-                         config.location = mainconfig.file,
+                         config.location = modelconfig.file,
                          coord.location = location.file,
                          cmodel,
-                         global.suffix = global.suffix)
+                         global.suffix = suffix)
 
     cjobname <- paste0("job_",suffix,".pbs")
     ED2scenarios::write_jobR(file = file.path(dir.name,cmodel,cjobname),
