@@ -12,23 +12,25 @@ library(ggthemes)
 # Settings
 
 Nrun.max.per.job <- 300
-global.suffix <- "DGVM"
 
 main.config <- list(lags = 12,
                     initial = 240,
                     horizon = 12,
-                    global.suffix = global.suffix,
+                    global.suffix = "DGVM",
                     step = 12,
                     skip = 11,
                     threshold = 0.1,
-                    restart = TRUE,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
+                    raster.grid = raster(extent(-179.75, 179.75,
+                                                -24.75, 24.75),
+                                         res = 2,
+                                         crs = "+proj=longlat +datum=WGS84"),
 
                     x_var = c("tmp","tmin","tmax",
                               "dswrf","VPD","CO2",
                               "pre","top.sml"),
-
                     y_var = "gpp",
+
                     year.min = 1991,
                     year.max = 2050,
 
@@ -48,13 +50,7 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
 
-lats <- seq(-23.25,23.25)
-lons <- seq(-179.25,179.25)
-r_extent <- extent(min(lons), max(lons), min(lats), max(lats))
-
-raster.grid <- raster(r_extent,
-                      res = 2,
-                      crs = "+proj=longlat +datum=WGS84")
+raster.grid <- main.config[["raster.grid"]]
 
 land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
@@ -82,7 +78,7 @@ dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
 
 mainconfig.file <- file.path(dir.name,
-                             paste0("main.config.",global.suffix,".RDS"))
+                             paste0("main.config.",main.config[["global.suffix"]],".RDS"))
 
 saveRDS(main.config,
         mainconfig.file)

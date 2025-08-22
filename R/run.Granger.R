@@ -13,6 +13,9 @@ run.Granger <- function(config.file){
   y_var <- config[["y_var"]]
   Grid <- config[["Grid"]]
 
+  year.min <- config[["year.min"]]
+  year.max <- config[["year.max"]]
+
   time2save <- config[["time2save"]]
   lons_lats <- config[["lons_lats"]]
 
