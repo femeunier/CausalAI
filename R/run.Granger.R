@@ -75,7 +75,7 @@ run.Granger <- function(config.file){
   names(msl) <- gsub("[._]+$", "",names(msl))
 
   if (any(grepl("gleam_sms",tolower(names(msl))))){
-    names(msl) <- "top.sml"
+    names(msl) <- rep("top.sml",length(names(msl)))
   }
 
 
