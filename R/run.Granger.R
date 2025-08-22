@@ -138,8 +138,8 @@ run.Granger <- function(config.file){
       dplyr::filter(variable != "ID") %>%
       ungroup() %>%
       arrange(variable) %>%
-      mutate(year = as.numeric((rep(msl.years,length(unique(variable))))),
-             month = as.numeric((rep(msl.months,length(unique(variable)))))) %>%
+      mutate(year = as.numeric(rep(msl.years,length(unique(variable)))),
+             month = as.numeric(rep(msl.months,length(unique(variable))))) %>%
       pivot_wider(names_from = "variable",
                   values_from = "value")
 

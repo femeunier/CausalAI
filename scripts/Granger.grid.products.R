@@ -96,7 +96,7 @@ for (iproduct in seq(1,length(products))){
   product.config <- main.config
   product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/GLEAM_SMs_")
   product.config[["CC.location"]] <- file.path(main.dir,
-                                             dirs[iproduct],"/GPP.",cproduct)
+                                             dirs[iproduct],paste0("GPP.",cproduct))
 
   productconfig.file <- file.path(dir.name,cproduct,
                                 paste0("config.",cproduct,".RDS"))

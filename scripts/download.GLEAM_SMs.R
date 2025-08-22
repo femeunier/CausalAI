@@ -16,6 +16,7 @@ for (cyear in years){
 
   file <- file.path(dest_dir,paste0("SMs_",cyear,"_GLEAM_v4.2a_MO.nc"))
   r <- stack(file)
+  names(r) <- "GLEAM_SMs"
 
   for (cmonth in months){
 
