@@ -240,19 +240,16 @@ run.Granger <- function(config.file){
                                    Rsq = RSQ,
                                    rBias,
                                    mean.y = mean(df[[y_var]],na.rm = TRUE),
-                                   sd.y = sd(df[[y_var]],na.rm = TRUE),
-                                   model = cmodel))
+                                   sd.y = sd(df[[y_var]],na.rm = TRUE)))
 
     all.test <- bind_rows(all.test,
                           data.frame(pred = y.pred,
                                      obs = y.test,
-                                     model = cmodel,
                                      lon_lat = clon.lat))
 
     all.X.test <- bind_rows(all.X.test,
                             (as.data.frame(dfl.test)) %>%
-                              mutate(model = cmodel,
-                                     lon_lat = clon.lat))
+                              mutate(lon_lat = clon.lat))
 
     # run <- tryCatch(ml_granger_all_causes(df, dfl,
     #                                       target = "gpp", lags = lags,
@@ -274,16 +271,14 @@ run.Granger <- function(config.file){
 
     all.results <- bind_rows(all.results,
                              results %>%
-                               mutate(model = cmodel,
-                                      lon_lat = clon.lat))
+                               mutate(lon_lat = clon.lat))
 
     shap_df <- run$shap_lags %>%
       as.data.frame()
 
     all.SHAP <- bind_rows(all.SHAP,
                           shap_df %>%
-                            mutate(model = cmodel,
-                                   lon_lat = clon.lat))
+                            mutate(lon_lat = clon.lat))
 
     elapsed <- as.numeric(difftime(Sys.time(), hour_start, units = "secs"))
 
