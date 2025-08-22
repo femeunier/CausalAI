@@ -12,6 +12,7 @@ library(glue)
 models <- rev(c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT"))
+models <- models[3]
 
 main_dir <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM"
 

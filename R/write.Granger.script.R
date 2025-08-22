@@ -13,12 +13,12 @@ write.Granger.script <- function(dir.name,
   write("",file=file,append=TRUE)
 
   write(paste0("config <- readRDS(\"",
-               coord.location,
+               config.location,
                "\")"),file=file,append=TRUE)
   write("",file=file,append=TRUE)
 
   write(paste0("lons_lats <- readRDS(\"",
-               config.location,
+               coord.location,
                "\")"),file=file,append=TRUE)
 
   write("",file=file,append=TRUE)

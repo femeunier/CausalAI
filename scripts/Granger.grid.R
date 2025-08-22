@@ -4,6 +4,9 @@ library(CausalAI)
 library(ED2scenarios)
 library(dplyr)
 library(purrr)
+library(raster)
+library(ggplot2)
+library(ggthemes)
 
 ###############################################################
 # Settings
@@ -98,7 +101,7 @@ for (cmodel in models){
   CC.location <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
 
   compt <- 1
-  for (istart in seq(1,length(Ntot.run),Nrun.max.per.job)){
+  for (istart in seq(1,Ntot.run,Nrun.max.per.job)){
     lons_lats <- df.lon.lat %>%
       filter(id %in% c(istart:(istart + Nrun.max.per.job -1))) %>%
       pull(lon_lat)
