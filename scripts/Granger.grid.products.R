@@ -16,10 +16,10 @@ Nrun.max.per.job <- 300
 main.config <- list(lags = 12,
                     initial = 240,
                     horizon = 12,
-                    global.suffix = "DGVM",
+                    global.suffix = "Product",
                     step = 12,
                     skip = 11,
-                    fac.CC = 86400*365,
+                    fac.CC = 1,
                     threshold = 0.1,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
                     raster.grid = raster(extent(-179.75, 179.75,
@@ -47,9 +47,17 @@ main.config <- list(lags = 12,
                     time2save = 600)
 
 
-models <- c("CABLE-POP","CLASSIC","CLM6.0",
-            "E3SM","JSBACH","JULES","LPJ-GUESS",
-            "LPJmL","LPX-Bern","VISIT")
+products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
+              "GOSIF","Zhou","GLASS","Sun","Bi",
+              "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
+              "MODIS") # "Zheng"
+
+dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
+          "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
+          "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
+          "MODIS_GPP") # "Zheng"
+
+main.dir <- '/data/gent/vo/000/gvo00074/felicien/GPP_data'
 
 raster.grid <- main.config[["raster.grid"]]
 
@@ -62,15 +70,6 @@ df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   mutate(lon_lat = paste0(lon,"_",lat)) %>%
   ungroup() %>%
   mutate(id = 1:n())
-
-world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-
-ggplot(data = df.lon.lat) +
-  geom_raster(aes(x = lon, y = lat,
-                  fill = value)) +
-  geom_sf(data = world,fill = NA, color = "grey17") +
-  scale_y_continuous(limits = c(-1,1)*23.5) +
-  theme_map()
 
 all.lons_lats <- df.lon.lat$lon_lat
 Ntot.run <- length(all.lons_lats)
@@ -86,21 +85,24 @@ saveRDS(main.config,
 
 list_dir <- list() ; job.names <- c()
 
-for (cmodel in models){
+for (iproduct in seq(1,length(products))){
 
-  print(paste0(cmodel))
+  cproduct <- products[iproduct]
 
-  dir.create(file.path(dir.name,cmodel),showWarnings = FALSE)
+  print(paste0(cproduct))
 
-  model.config <- main.config
-  model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
-  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
+  dir.create(file.path(dir.name,cproduct),showWarnings = FALSE)
 
-  modelconfig.file <- file.path(dir.name,cmodel,
-                                paste0("config.",cmodel,".RDS"))
+  product.config <- main.config
+  product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/GLEAM_SMs_")
+  product.config[["CC.location"]] <- file.path(main.dir,
+                                             dirs[iproduct],"/GPP.",cproduct)
 
-  saveRDS(model.config,
-          modelconfig.file)
+  productconfig.file <- file.path(dir.name,cproduct,
+                                paste0("config.",cproduct,".RDS"))
+
+  saveRDS(product.config,
+          productconfig.file)
 
   compt <- 1
   for (istart in seq(1,Ntot.run,Nrun.max.per.job)){
@@ -108,14 +110,14 @@ for (cmodel in models){
       filter(id %in% c(istart:(istart + Nrun.max.per.job -1))) %>%
       pull(lon_lat)
 
-    location.file <- file.path(file.path(dir.name, cmodel),
+    location.file <- file.path(file.path(dir.name, cproduct),
                                paste0("location.",compt,".RDS"))
     saveRDS(lons_lats,
             location.file)
 
-    suffix <- paste0(cmodel,"_",compt)
+    suffix <- paste0(cproduct,"_",compt)
 
-    write.Granger.script(dir.name = file.path(dir.name, cmodel),
+    write.Granger.script(dir.name = file.path(dir.name, cproduct),
                          file.name = paste0("Rscript_",suffix,".R"),
                          config.location = modelconfig.file,
                          coord.location = location.file,
@@ -123,13 +125,13 @@ for (cmodel in models){
                          suffix = suffix)
 
     cjobname <- paste0("job_",suffix,".pbs")
-    ED2scenarios::write_jobR(file = file.path(dir.name,cmodel,cjobname),
+    ED2scenarios::write_jobR(file = file.path(dir.name,cproduct,cjobname),
                              nodes = 1,ppn = 16,mem = 100,walltime = 12,
                              prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
-                             CD = file.path(dir.name,cmodel),
+                             CD = file.path(dir.name,cproduct),
                              Rscript = paste0("Rscript_",suffix,".R"))
     job.names <- c(job.names,cjobname)
-    list_dir[[suffix]] = file.path(dir.name,cmodel)
+    list_dir[[suffix]] = file.path(dir.name,cproduct)
 
     compt <- compt + 1
 
@@ -137,8 +139,8 @@ for (cmodel in models){
 }
 
 dumb <- write_bash_submission(file = file.path(getwd(),
-                                               "All.Granger.sh"),
+                                               "All.Granger.products.sh"),
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/Granger.grid.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/Granger.grid.products.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

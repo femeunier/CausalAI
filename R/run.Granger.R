@@ -6,7 +6,6 @@ run.Granger <- function(config.file){
   lags <- config[["lags"]]
   initial <- config[["initial"]]
   horizon <- config[["horizon"]]
-  step <- config[["step"]]
   skip <- config[["skip"]]
   threshold <- config[["threshold"]]
   x_var <- config[["x_var"]]
@@ -18,6 +17,12 @@ run.Granger <- function(config.file){
 
   time2save <- config[["time2save"]]
   lons_lats <- config[["lons_lats"]]
+
+  fac.CC <- config["fac.CC"]
+
+  if (is.null(fac.CC)){
+    fac.CC <- 86400*365
+  }
 
   raster.grid <- config[["raster.grid"]]
   SWC.location <- config[["SWC.location"]]
@@ -53,8 +58,8 @@ run.Granger <- function(config.file){
                                                ".*.tif$"),
                               full.names = TRUE)
   climate <- rast(climate.files)
-  climate.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"\\_"),"[[",2)))
-  climate.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"\\_"),"[[",3)))
+  climate.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"_|\\."),"[[",2)))
+  climate.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"_|\\."),"[[",3)))
 
 
   msl.files <- list.files(path = dirname(SWC.location),
@@ -63,8 +68,8 @@ run.Granger <- function(config.file){
                                                ".*.tif$"),
                           full.names = TRUE)
   msl <- rast(msl.files)
-  msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"\\_"),"[[",3)))
-  msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"\\_"),"[[",4)))
+  msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",3)))
+  msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",4)))
 
   cc.files <- list.files(path = dirname(CC.location),
                           pattern = paste0("^",
@@ -72,8 +77,8 @@ run.Granger <- function(config.file){
                                            ".*.tif$"),
                          full.names = TRUE)
   cc <- rast(cc.files)
-  cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"\\_"),"[[",3)))
-  cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"\\_"),"[[",4)))
+  cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",3)))
+  cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",4)))
 
   ###################################################################
   # We make sure all grids are aligned
@@ -152,7 +157,7 @@ run.Granger <- function(config.file){
       arrange(variable) %>%
       mutate(year = as.numeric(rep(cc.years,length(unique(variable)))),
              month = as.numeric(rep(cc.months,length(unique(variable))))) %>%
-      mutate(value = value*86400*365) %>%
+      mutate(value = value*fac.CC) %>%
       pivot_wider(names_from = "variable",
                   values_from = "value")
 
