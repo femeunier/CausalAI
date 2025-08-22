@@ -18,7 +18,7 @@ run.Granger <- function(config.file){
   time2save <- config[["time2save"]]
   lons_lats <- config[["lons_lats"]]
 
-  fac.CC <- config["fac.CC"]
+  fac.CC <- config[["fac.CC"]]
 
   if (is.null(fac.CC)){
     fac.CC <- 86400*365
