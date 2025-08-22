@@ -22,6 +22,8 @@ write.Granger.script <- function(dir.name,
 
   write(paste0("dest.dir <- paste0(\"",dir.name,"\")"),
         file=file,append=TRUE)
+  write(paste0("suffix <- paste0(\"",suffix,"\")"),
+        file=file,append=TRUE)
 
   write("",file=file,append=TRUE)
   write(paste0("config[[\"","lons_lats","\"","]] <- lons_lats"),
