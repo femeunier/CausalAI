@@ -14,7 +14,7 @@ library(ggthemes)
 Nrun.max.per.job <- 300
 
 main.config <- list(lags = 12,
-                    initial = 240,
+                    initial = 200,
                     horizon = 12,
                     global.suffix = "DGVM",
                     step = 12,
@@ -24,20 +24,19 @@ main.config <- list(lags = 12,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
                     raster.grid = raster(extent(-179.75, 179.75,
                                                 -24.75, 24.75),
-                                         res = 2,
+                                         res = 1,
                                          crs = "+proj=longlat +datum=WGS84"),
-
                     x_var = c("tmp","tmin","tmax",
                               "dswrf","vpd","CO2",
                               "pre","top.sml"),
                     y_var = "gpp",
 
-                    year.min = 1991,
+                    year.min = 1980,
                     year.max = 2050,
 
                     Grid = expand.grid(
                       nrounds = c(200, 600, 1200),
-                      max_depth = c(3, 6),
+                      max_depth = c(3, 6, 12),
                       eta = c(0.03, 0.1),
                       gamma = c(0),
                       colsample_bytree = c(0.8),
@@ -57,8 +56,8 @@ land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
 df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   rename(lon = x, lat = y) %>%
-  filter(value > 0) %>%
-  filter(abs(lat)< 25) %>%
+  filter(value > 0.25) %>%
+  filter(abs(lat) < 25) %>%
   mutate(lon_lat = paste0(lon,"_",lat)) %>%
   ungroup() %>%
   mutate(id = 1:n())
