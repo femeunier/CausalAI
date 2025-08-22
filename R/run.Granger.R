@@ -7,6 +7,8 @@ run.Granger <- function(config.file){
   initial <- config[["initial"]]
   horizon <- config[["horizon"]]
   skip <- config[["skip"]]
+  step <- config[["step"]]
+
   threshold <- config[["threshold"]]
   x_var <- config[["x_var"]]
   y_var <- config[["y_var"]]
