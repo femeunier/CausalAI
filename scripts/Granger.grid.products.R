@@ -28,7 +28,7 @@ main.config <- list(lags = 12,
                                          crs = "+proj=longlat +datum=WGS84"),
 
                     x_var = c("tmp","tmin","tmax",
-                              "dswrf","VPD","CO2",
+                              "dswrf","vpd","CO2",
                               "pre","top.sml"),
                     y_var = "gpp",
 

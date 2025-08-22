@@ -74,6 +74,11 @@ run.Granger <- function(config.file){
   names(msl) <- gsub(tolower(name),"",tolower(names(msl)))
   names(msl) <- gsub("[._]+$", "",names(msl))
 
+  if (any(grepl("gleam_sms",tolower(names(msl))))){
+    names(msl) <- "top.sml"
+  }
+
+
   msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",3)))
   msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",4)))
 
