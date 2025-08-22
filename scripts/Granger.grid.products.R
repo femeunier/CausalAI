@@ -119,9 +119,9 @@ for (iproduct in seq(1,length(products))){
 
     write.Granger.script(dir.name = file.path(dir.name, cproduct),
                          file.name = paste0("Rscript_",suffix,".R"),
-                         config.location = modelconfig.file,
+                         config.location = productconfig.file,
                          coord.location = location.file,
-                         cmodel,
+                         cproduct,
                          suffix = suffix)
 
     cjobname <- paste0("job_",suffix,".pbs")
