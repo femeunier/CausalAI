@@ -13,6 +13,8 @@ ml_granger_xgb <- function(dfl, target, cause, lags = 12,
   cause_lag_cols <- paste0(cause, "_L", 1:lags)
   X_red  <- X_full[, setdiff(colnames(X_full), cause_lag_cols), drop = FALSE]
 
+  # Data leakage! Transformed LSTM
+
   params <- list(
     objective = "reg:squarederror",
     eta = bestTune$eta,

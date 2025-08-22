@@ -7,7 +7,7 @@ library(raster)
 library(lubridate)
 
 dir <- "/data/gent/vo/000/gvo00074/felicien/GPP_data/Zhang/"
-files <- list.files(dir, pattern = "\\.tif$", full.names = FALSE)
+files <- list.files(dir, pattern = "GPP.VPM.*.tif$", full.names = FALSE)
 
 years <- as.numeric(lapply(strsplit(files,"\\."),"[[",3))
 months <- as.numeric(sub("M","",lapply(strsplit(files,"\\."),"[[",4)))
@@ -25,8 +25,8 @@ for (ifile in seq(1,length(files))){
                                            sprintf("%02d",cmonth),
                                            "/01")))
 
-  r <- raster(file.path(dir,files[length(files)]))
-  writeRaster(crop(r,e)/1000* ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
+  r <- raster(file.path(dir,files[ifile]))
+  writeRaster(crop(r,e)/Ndays/1000* ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
                           366,365),
               file.path(dir,
                         paste0('GPP.Zhang.',cyear,

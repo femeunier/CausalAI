@@ -24,18 +24,20 @@ for (cyear in seq(1982,2018)){
 
     print(cfile)
 
-    if (!file.exists(file)){next()}
-
-    Ndays <- as.numeric(days_in_month(paste0(cyear,
-                                             "/",
-                                             sprintf("%02d",cmonth),
-                                             "/01")))
+    if (!file.exists(file)){
+      next()
+    }
 
     GPP <- raster(file)
     GPP[GPP == -9999] <- NA
-    GPP <- GPP*SF/Ndays
+    GPP <- GPP*SF
 
-    writeRaster(crop(GPP,e)/1000* ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
+    GPP.corr <- t(flip(GPP, 2))
+
+    extent(GPP.corr) <- extent(-180, 180, -90, 90)
+    crs(GPP.corr) <- "EPSG:4326"
+
+    writeRaster(crop(GPP.corr,e)/1000* ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
                                         366,365),
                 file.path(dir,
                           paste0('GPP.NIR.',cyear,

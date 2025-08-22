@@ -28,6 +28,8 @@ df <- data.frame(year = years,
                  month = months) %>%
   distinct()
 
+overwrite <- TRUE
+
 for (i in seq(1,nrow(df))){
 
   print(paste0(i,"/",nrow(df)))
@@ -36,11 +38,17 @@ for (i in seq(1,nrow(df))){
   pos <- which((years == cyear) & (months == cmonth))
   cr <- r[[c(pos)]]
 
-  writeRaster(mean(crop(cr,e))/1000* ifelse(lubridate::leap_year(paste0(years[i],"/01/01")),
+  dest.file <- file.path(dir,
+                        paste0('GPP.VOD.',cyear,
+                               ".",sprintf("%02d",cmonth),".tif"))
+
+  if (!overwrite & file.exists(dest.file)){
+    next
+  }
+
+  writeRaster(mean(crop(cr,e))/1000* ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
                                       366,365),
-              file.path(dir,
-                        paste0('GPP.VOD.',years[i],
-                               ".",sprintf("%02d",months[i]),".tif")),
+              dest.file,
               options=c('TFW=YES'),
               overwrite = TRUE)
 }

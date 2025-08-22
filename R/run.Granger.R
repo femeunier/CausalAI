@@ -2,7 +2,6 @@ run.Granger <- function(config.file){
 
   config <- readRDS(config.file)
 
-  cmodel <- config[["cmodel"]]
   global.suffix <- config[["global.suffix"]]
   lags <- config[["lags"]]
   initial <- config[["initial"]]
@@ -13,16 +12,14 @@ run.Granger <- function(config.file){
   x_var <- config[["x_var"]]
   y_var <- config[["y_var"]]
   Grid <- config[["Grid"]]
-  restart <- config[["restart"]]
 
   time2save <- config[["time2save"]]
+  lons_lats <- config[["lons_lats"]]
 
-  lat.max <- config[["lat.max"]]
-  lat.min <- config[["lat.min"]]
-  lon.max <- config[["lon.max"]]
-  lon.min <- config[["lon.min"]]
-  year.max <- config[["year.max"]]
-  year.min <- config[["year.min"]]
+  raster.grid <- config[["raster.grid"]]
+  SWC.location <- config[["SWC.location"]]
+  CC.location <- config[["CC.location"]]
+  climate.location <- config[["climate.location"]]
 
   dest.dir <- config[["dest.dir"]]
 
@@ -30,12 +27,6 @@ run.Granger <- function(config.file){
     Ncores <- as.numeric(future::availableCores())
     future::plan("multisession", workers = Ncores)
   }
-
-  suffix <- paste0(cmodel,
-                   "_lats",lat.min,"_",lat.max,
-                   "_lons",lon.min,"_",lon.max,
-                   "_",global.suffix)
-
 
   CO2 <- read.table("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/global_co2_ann_1700_2024.txt") %>%
     rename(year = V1,
@@ -52,52 +43,41 @@ run.Granger <- function(config.file){
     y = CO2$CO2,
     xout = monthly_df$year_decimal)$y
 
-  climate <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/grid.",cmodel,".JRA.v13.RDS")) %>%
-    mutate(lat = round(lat,digits = 2),
-           lon = round(lon,digits = 2)) %>%
-    left_join(monthly_df,
-              by = c("year","month")) %>%
-    ungroup()
 
-  msl.file <- paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/MSL.grid.",cmodel,".RDS")
-  msl.ts <- readRDS(msl.file) %>%
-    mutate(year = year(time),
-           month = month(time)) %>%
-    dplyr::select(lon,lat,year,month,
-                  top.sml,tot.sml) %>%
-    mutate(lat = round(lat,digits = 2),
-           lon = round(lon,digits = 2)) %>%
-    ungroup() %>%
-    mutate(lon = case_when(lon > 180 ~ lon - 360,
-                           TRUE ~ lon))
+  climate.files <- list.files(path = dirname(climate.location),
+                              pattern = paste0("^",
+                                               basename(climate.location),
+                                               ".*.tif$"),
+                              full.names = TRUE)
+  climate <- rast(climate.files)
+  climate.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"\\_"),"[[",2)))
+  climate.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"\\_"),"[[",3)))
 
-  CC <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Trendy.",cmodel,".S2.CC.pantropical.v13.RDS")) %>%
-    dplyr::select(lon,lat,year,month,gpp) %>%
-    mutate(lat = round(lat,digits = 2),
-           lon = round(lon,digits = 2)) %>%
-    ungroup()
 
-  # Merge all datasets
-  all <- climate %>%
-    left_join(msl.ts,
-              by = c("lon","lat","year","month")) %>%
-    left_join(CC %>%
-                mutate(gpp = as.numeric(gpp)*86400*365),
-              by = c("lon","lat","year","month")) %>%
-    dplyr::select(any_of(c("lon","lat","year","month",
-                           x_var,
-                           y_var))) %>%
-    mutate(lon_lat = paste0(lon,"_",lat))
+  msl.files <- list.files(path = dirname(SWC.location),
+                              pattern = paste0("^",
+                                               basename(SWC.location),
+                                               ".*.tif$"),
+                          full.names = TRUE)
+  msl <- rast(msl.files)
+  msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"\\_"),"[[",3)))
+  msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"\\_"),"[[",4)))
 
-  all.select <- all %>%
-    filter(lat >= lat.min, lat < lat.max) %>%
-    filter(lon >= lon.min, lon < lon.max) %>%
-    filter(year >= year.min, year <= year.max) %>%
-    na.omit()
+  cc.files <- list.files(path = dirname(CC.location),
+                          pattern = paste0("^",
+                                           basename(CC.location),
+                                           ".*.tif$"),
+                         full.names = TRUE)
+  cc <- rast(cc.files)
+  cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"\\_"),"[[",3)))
+  cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"\\_"),"[[",4)))
 
-  lons_lats <- all.select %>%
-    pull(lon_lat) %>%
-    unique()
+  ###################################################################
+  # We make sure all grids are aligned
+
+  climate.rspld <- terra::resample(climate,rast(raster.grid),method = "bilinear")
+  msl.rspld <- terra::resample(msl,rast(raster.grid),method = "bilinear")
+  cc.rspld <- terra::resample(cc,rast(raster.grid),method = "bilinear")
 
   ##################################################################
   # Timer
@@ -110,38 +90,84 @@ run.Granger <- function(config.file){
   #######################################################################
   # Main loop
 
-  if (restart){
-
-    df.QoF <-
-      all.X.test <-
-      all.test <-
-      all.SHAP <-
-      all.results <-
-      data.frame()
-
-  } else {
-
-    df.QoF <- tryCatch(readRDS(file.path(dest.dir,paste0("QoF.Granger_",suffix,".RDS"))),
-                       error = function(e) data.frame())
-    all.X.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.test.XGBoosts.Granger_",suffix,".RDS"))),
-                           error = function(e) data.frame())
-    all.SHAP <- tryCatch(readRDS(file.path(dest.dir,paste0("All.SHAP.Granger_",suffix,".RDS"))),
-                         error = function(e) data.frame())
-    all.test <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.Granger",suffix,".RDS"))),
-                         error = function(e) data.frame())
-    all.results <- tryCatch(readRDS(file.path(dest.dir,paste0("All.X.test.Granger_",suffix,".RDS"))),
-                         error = function(e) data.frame())
-
-    lons_lats <- lons_lats[!(lons_lats %in% unique(df.QoF$lon_lat))]
-  }
+  df.QoF <-
+    all.X.test <-
+    all.test <-
+    all.SHAP <-
+    all.results <-
+    data.frame()
 
   for (ilon.lat in seq(1,length(lons_lats))){
 
-    clon.lat <- lons_lats[ilon.lat]
     print(ilon.lat/length(lons_lats))
 
-    df <- all.select %>%
-      filter(lon_lat == clon.lat) %>%
+    clon.lat <- lons_lats[ilon.lat]
+
+    clon <- as.numeric(strsplit(clon.lat,"\\_")[[1]][1])
+    clat <- as.numeric(strsplit(clon.lat,"\\_")[[1]][2])
+
+    # We exctract
+    temp.climate <- terra::extract(climate.rspld,
+                                  terra::vect(data.frame(lon = clon,
+                                                        lat = clat),
+                                              geom = c("lon", "lat")))
+
+    cdf.climate <- data.frame(variable = colnames(temp.climate),
+                              value = as.numeric(temp.climate)) %>%
+      dplyr::filter(variable != "ID") %>%
+      ungroup() %>%
+      arrange(variable) %>%
+      mutate(year = as.numeric(rep(climate.years,length(unique(variable)))),
+             month = as.numeric(rep(climate.months,length(unique(variable))))) %>%
+      pivot_wider(names_from = "variable",
+                  values_from = "value")
+
+    temp.msl <- terra::extract(msl.rspld,
+                                   terra::vect(data.frame(lon = clon,
+                                                          lat = clat),
+                                               geom = c("lon", "lat")))
+
+    cdf.msl <- data.frame(variable = colnames(temp.msl),
+                              value = as.numeric(temp.msl)) %>%
+      dplyr::filter(variable != "ID") %>%
+      ungroup() %>%
+      arrange(variable) %>%
+      mutate(year = as.numeric((rep(msl.years,length(unique(variable))))),
+             month = as.numeric((rep(msl.months,length(unique(variable)))))) %>%
+      pivot_wider(names_from = "variable",
+                  values_from = "value")
+
+    temp.cc <- terra::extract(cc.rspld,
+                               terra::vect(data.frame(lon = clon,
+                                                      lat = clat),
+                                           geom = c("lon", "lat")))
+
+    cdf.cc <- data.frame(variable = colnames(temp.cc),
+                          value = as.numeric(temp.cc)) %>%
+      dplyr::filter(variable != "ID") %>%
+      ungroup() %>%
+      arrange(variable) %>%
+      mutate(year = as.numeric(rep(cc.years,length(unique(variable)))),
+             month = as.numeric(rep(cc.months,length(unique(variable))))) %>%
+      mutate(value = value*86400*365) %>%
+      pivot_wider(names_from = "variable",
+                  values_from = "value")
+
+    # We merged them all
+
+    all <- cdf.climate %>%
+      left_join(cdf.msl,
+                by = c("year","month")) %>%
+      left_join(cdf.cc,
+                by = c("year","month")) %>%
+      left_join(monthly_df,
+                by = c("year","month")) %>%
+      na.omit() %>%
+      filter(year >= year.min,
+             year <= year.max) %>%
+      select(any_of(c(x_var,y_var)))
+
+    df <- all %>%
       dplyr::select(-any_of(c("lon","lat","lon_lat",
                               "year","month")))
 
@@ -150,7 +176,7 @@ run.Granger <- function(config.file){
       next()
     }
 
-    if(all(df[[y_var]] < threshold)){
+    if(all(abs(df[[y_var]]) < threshold)){
       next()
     }
 
@@ -180,16 +206,15 @@ run.Granger <- function(config.file){
     #                                     lags = lags,
     #                                     initial = initial, horizon = horizon, skip = skip),
     #                 error = function(e) NULL)
-#
-#     if (is.null(fit)) next()
+    #
+    # if (is.null(fit)) next()
 
     fit <- tune_xgb_with_caret(train = data.matrix(dfl.train),
                                y = as.numeric(y.train),
                                grid = Grid,
-                               target = "gpp",
+                               target = y_var,
                                lags = lags,
                                initial = initial, horizon = horizon, skip = skip)
-
 
     bestTune <- fit$bestTune
     bestModel <- fit$finalModel

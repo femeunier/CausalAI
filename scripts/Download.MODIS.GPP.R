@@ -1,5 +1,5 @@
-# Step 1
-
+# # Step 1
+#
 # rm(list = ls())
 #
 # # Load required libraries
@@ -23,7 +23,7 @@
 # months <- seq(start_date, end_date, by = "1 month")
 #
 # # Geometry
-# region <- ee$Geometry$Rectangle(c(-180, -23.5, 180, 23.5), "EPSG:4326", FALSE)
+# region <- ee$Geometry$Rectangle(c(-180, -25, 180, 25), "EPSG:4326", FALSE)
 #
 # # Prep MODIS collection (scaled once)
 # col <- ee$ImageCollection(collection_id)$select("Gpp")$
@@ -84,17 +84,17 @@ rm(list = ls())
 library(raster)
 
 dir <- "/data/gent/vo/000/gvo00074/felicien/GPP_data/MODIS_GPP/"
-files <- list.files(dir, pattern = "\\.tif$", full.names = FALSE)
+files <- list.files(dir, pattern = "^MODIS.*\\.tif$",
+                    full.names = FALSE)
 
 years <- as.numeric(lapply(strsplit(files,"\\_"),"[[",5))
 months <- as.numeric(lapply(strsplit(files,"\\_"),"[[",6))
-
 
 for (ifile in seq(1,length(files))){
 
   print(paste0(ifile,"/",length(files)))
 
-  r <- raster(file.path(dir,files[length(files)]))
+  r <- raster(file.path(dir,files[ifile]))
   writeRaster(r/8* ifelse(lubridate::leap_year(paste0(years[ifile],"/01/01")),
                           366,365),
               file.path(dir,

@@ -8,42 +8,75 @@ library(purrr)
 ###############################################################
 # Settings
 
-global.suffix <- "Amazon"
+Nrun.max.per.job <- 300
+global.suffix <- "DGVM"
 
 main.config <- list(lags = 12,
-               initial = 240,
-               horizon = 12,
-               global.suffix = global.suffix,
-               step = 12,
-               skip = 11,
-               threshold = 0.1,
-               restart = TRUE,
-               x_var = c("tmp","tmin","tmax","dswrf","VPD","CO2","pre","top.sml"),
-               y_var = "gpp",
-               year.min = 1991,
-               year.max = 2050,
-               Grid = expand.grid(
-                 nrounds = c(200, 600, 1200),
-                 max_depth = c(3, 6),
-                 eta = c(0.03, 0.1),
-                 gamma = c(0),
-                 colsample_bytree = c(0.8),
-                 min_child_weight = c(1),
-                 subsample = c(0.8)),
-               time2save = 600)
+                    initial = 240,
+                    horizon = 12,
+                    global.suffix = global.suffix,
+                    step = 12,
+                    skip = 11,
+                    threshold = 0.1,
+                    restart = TRUE,
 
-Global.lat.min <- -23 ; Global.lat.max <- 23 ; Delta_lat <- 10
+                    x_var = c("tmp","tmin","tmax",
+                              "dswrf","VPD","CO2",
+                              "pre","top.sml"),
 
-Global.lon.min <- -90 ; Global.lon.max <- -35 ; Delta_lon <- 10
-Global.lon.min <- -15 ; Global.lon.max <- 60 ; Delta_lon <- 10
+                    y_var = "gpp",
+                    year.min = 1991,
+                    year.max = 2050,
+
+                    Grid = expand.grid(
+                      nrounds = c(200, 600, 1200),
+                      max_depth = c(3, 6),
+                      eta = c(0.03, 0.1),
+                      gamma = c(0),
+                      colsample_bytree = c(0.8),
+                      min_child_weight = c(1),
+                      subsample = c(0.8)),
+
+                    time2save = 600)
 
 
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
 
+lats <- seq(-23.25,23.25)
+lons <- seq(-179.25,179.25)
+r_extent <- extent(min(lons), max(lons), min(lats), max(lats))
+
+raster.grid <- raster(r_extent,
+                      res = 2,
+                      crs = "+proj=longlat +datum=WGS84")
+
+land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
+land.frac.rspld <- raster::resample(land.frac,raster.grid)
+df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
+  rename(lon = x, lat = y) %>%
+  filter(value > 0) %>%
+  filter(abs(lat)< 25) %>%
+  mutate(lon_lat = paste0(lon,"_",lat)) %>%
+  ungroup() %>%
+  mutate(id = 1:n())
+
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot(data = df.lon.lat) +
+  geom_raster(aes(x = lon, y = lat,
+                  fill = value)) +
+  geom_sf(data = world,fill = NA, color = "grey17") +
+  scale_y_continuous(limits = c(-1,1)*23.5) +
+  theme_map()
+
+all.lons_lats <- df.lon.lat$lon_lat
+Ntot.run <- length(all.lons_lats)
+
 dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
+
 mainconfig.file <- file.path(dir.name,
                              paste0("main.config.",global.suffix,".RDS"))
 
@@ -53,90 +86,48 @@ saveRDS(main.config,
 
 list_dir <- list() ; job.names <- c()
 
-Nsim <- 0
-Nsim.max <- 50
+climate.location <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate"
 
 for (cmodel in models){
 
-  print(paste0(cmodel,"-",global.suffix))
-
-  new.job.file <- TRUE
-  init <- TRUE
+  print(paste0(cmodel))
 
   dir.create(file.path(dir.name,cmodel),showWarnings = FALSE)
 
-  cCC <- readRDS(paste0("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Trendy.",cmodel,".S2.CC.pantropical.v13.RDS")) %>%
-    dplyr::select(lon,lat,year,month,gpp) %>%
-    filter(year >= main.config$year.min,
-           year <= main.config$year.max) %>%
-    mutate(gpp = gpp*86400*365) %>%
-    distinct()
+  SWC.location <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
+  CC.location <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
 
-  for (clat in seq(Global.lat.min,Global.lat.max,Delta_lat)){
-    for (clon in seq(Global.lon.min,Global.lon.max,Delta_lon)){
+  compt <- 1
+  for (istart in seq(1,length(Ntot.run),Nrun.max.per.job)){
+    lons_lats <- df.lon.lat %>%
+      filter(id %in% c(istart:(istart + Nrun.max.per.job -1))) %>%
+      pull(lon_lat)
 
-      lat.min <- clat ; lat.max <- lat.min + Delta_lat
-      lon.min <- clon ; lon.max <- lon.min + Delta_lon
+    location.file <- file.path(file.path(dir.name, cmodel),
+                               paste0("location.",compt,".RDS"))
+    saveRDS(lons_lats,
+            location.file)
 
-      cdf <- cCC %>%
-        filter(lat >= lat.min, lat < lat.max) %>%
-        filter(lon >= lon.min, lon < lon.max) %>%
-        na.omit()
+    suffix <- paste0(cmodel,"_",compt)
 
-      if (nrow(cdf) == 0) next()
+    write.Granger.script(dir.name = file.path(dir.name, cmodel),
+                         file.name = paste0("Rscript_",suffix,".R"),
+                         config.location = mainconfig.file,
+                         coord.location = location.file,
+                         cmodel,
+                         global.suffix = global.suffix)
 
-      cdf.run <- cdf %>%
-        group_by(lon,lat) %>%
-        summarise(run = !all(gpp < main.config[["threshold"]]),
-                  .groups = "keep") %>%
-        filter(run)
+    cjobname <- paste0("job_",suffix,".pbs")
+    ED2scenarios::write_jobR(file = file.path(dir.name,cmodel,cjobname),
+                             nodes = 1,ppn = 16,mem = 100,walltime = 12,
+                             prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
+                             CD = file.path(dir.name,cmodel),
+                             Rscript = paste0("Rscript_",suffix,".R"))
+    job.names <- c(job.names,cjobname)
+    list_dir[[suffix]] = file.path(dir.name,cmodel)
 
-      if (nrow(cdf.run) == 0) next()
+    compt <- compt + 1
 
-      suffix <- paste0(cmodel,
-                       "_lats",lat.min,"_",lat.max,
-                       "_lons",lon.min,"_",lon.max,
-                       "_",global.suffix)
-
-      write.Granger.script(dir.name = file.path(dir.name,cmodel),
-                           file.name = paste0("Rscript_",suffix,".R"),
-                           config.location = mainconfig.file,
-                           cmodel,
-                           global.suffix = global.suffix,
-                           lat.min,lat.max,
-                           lon.min,lon.max)
-
-
-      Nsim <- Nsim + nrow(cdf.run)
-
-      if (Nsim > Nsim.max){
-        new.job.file <- TRUE
-        Nsim <- 0
-      } else {
-        new.job.file <- FALSE
-      }
-
-      if (init | new.job.file){
-        cjobname <- paste0("job_",suffix,".pbs")
-        ED2scenarios::write_jobR(file = file.path(dir.name,cmodel,cjobname),
-                                 nodes = 1,ppn = 16,mem = 100,walltime = 12,
-                                 prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
-                                 CD = file.path(dir.name,cmodel),
-                                 Rscript = paste0("Rscript_",suffix,".R"))
-        job.names <- c(job.names,cjobname)
-        list_dir[[suffix]] = file.path(dir.name,cmodel)
-
-        if (init){
-          init <- FALSE
-        }
-
-      } else {
-
-        write(paste0("Rscript ",paste0("Rscript_",suffix,".R")),
-              file=file.path(dir.name,cmodel,cjobname),
-              append=TRUE)
-      }
-    }
   }
 }
 

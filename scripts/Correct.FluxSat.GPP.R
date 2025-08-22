@@ -7,12 +7,12 @@ library(reshape2)
 library(raster)
 
 all.files <- rev(read.table("allFluxSatLinks.txt",
-                        header = FALSE)[[1]])
+                            header = FALSE)[[1]])
 
 dest.dir <- "/data/gent/vo/000/gvo00074/felicien/GPP_data/FluxSat/"
 e <- extent(-180,180,-25,25)
 
-for (ifile in seq(1,length(all.files))){
+for (ifile in seq(150,length(all.files))){
 
   clink <- all.files[ifile]
 
@@ -24,10 +24,35 @@ for (ifile in seq(1,length(all.files))){
 
   print(paste0(basename(ncfile)," - ", cyear,"/",cmonth))
 
-  op.file <- file.path(dest.dir,
+  op.file1 <- file.path(dest.dir,
                        paste0('GPP.FLUXSAT.',cyear,".",sprintf("%02d",cmonth),".tif"))
+  op.file2 <- file.path(dest.dir,
+                        paste0('count_GPP.FLUXSAT.',cyear,".",sprintf("%02d",cmonth),".tif"))
 
-  if (file.exists(op.file)) next
+  if (file.exists(op.file1) & file.exists(op.file2)){
+    system2("mv",
+            c(op.file2,
+              file.path(dest.dir,"tmp1")))
+    system2("mv",
+            c(paste0(tools::file_path_sans_ext(op.file2),".tfw"),
+              file.path(dest.dir,"tmp2")))
+
+    system2("mv",
+            c(op.file1,op.file2))
+    system2("mv",
+            c(paste0(tools::file_path_sans_ext(op.file1),".tfw"),
+              paste0(tools::file_path_sans_ext(op.file2),".tfw")))
+
+    system2("mv",
+            c(file.path(dest.dir,"tmp1"),
+              op.file1))
+    system2("mv",
+            c(file.path(dest.dir,"tmp2"),
+              paste0(tools::file_path_sans_ext(op.file1),".tfw")))
+
+    next()
+
+  }
 
   if (!file.exists(ncfile)){
     system2("wget",
@@ -66,11 +91,11 @@ for (ifile in seq(1,length(all.files))){
   writeRaster((GPP_mean/1000*
                  ifelse(lubridate::leap_year(paste0(cyear,"/01/01")),
                         366,365)),
-              op.file,
+              op.file1,
               options=c('TFW=YES'),
               overwrite = TRUE)
 
   if (file.exists(ncfile)) system2("rm",ncfile)
 }
 
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/Download.FluxSat.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/Correct.FluxSat.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
