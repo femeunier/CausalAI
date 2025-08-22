@@ -3,6 +3,7 @@ run.Granger <- function(config.file){
   config <- readRDS(config.file)
 
   global.suffix <- config[["global.suffix"]]
+  suffix <- config[["suffix"]]
   lags <- config[["lags"]]
   initial <- config[["initial"]]
   horizon <- config[["horizon"]]
