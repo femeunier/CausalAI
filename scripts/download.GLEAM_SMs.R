@@ -22,7 +22,7 @@ for (cyear in years){
     print(paste0(cyear,"-",cmonth))
 
     cr <- crop(r[[cmonth]],e)
-    names(cr) <- "GLEAM_SMs"
+    names(cr) <- "top.sml"
 
     writeRaster(cr,
                 file.path(dest_dir,

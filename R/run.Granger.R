@@ -5,6 +5,7 @@ run.Granger <- function(config.file){
   global.suffix <- config[["global.suffix"]]
   suffix <- config[["suffix"]]
   lags <- config[["lags"]]
+  name <- config[["name"]]
   initial <- config[["initial"]]
   horizon <- config[["horizon"]]
   skip <- config[["skip"]]
@@ -56,7 +57,9 @@ run.Granger <- function(config.file){
                                                ".*.tif$"),
                               full.names = TRUE)
   climate <- rast(climate.files)
-  names(climate) <- gsub("[._]+$", "",gsub("[0-9]","", names(climate)))
+  names(climate) <- gsub("[0-9]","", names(climate))
+  names(climate) <- gsub(tolower(name),"",tolower(names(climate)))
+  names(climate) <- gsub("[._]+$", "",names(climate))
   climate.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"_|\\."),"[[",2)))
   climate.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"_|\\."),"[[",3)))
 
@@ -67,7 +70,10 @@ run.Granger <- function(config.file){
                                                ".*.tif$"),
                           full.names = TRUE)
   msl <- rast(msl.files)
-  names(msl) <- gsub("[._]+$", "",gsub("[0-9]", "", names(msl)))
+  names(msl) <- gsub("[0-9]","", names(msl))
+  names(msl) <- gsub(tolower(name),"",tolower(names(msl)))
+  names(msl) <- gsub("[._]+$", "",names(msl))
+
   msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",3)))
   msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",4)))
 
@@ -77,7 +83,9 @@ run.Granger <- function(config.file){
                                            ".*.tif$"),
                          full.names = TRUE)
   cc <- rast(cc.files)
-  names(cc) <- gsub("[._]+$", "",gsub("[0-9]","", names(cc)))
+  names(cc) <- gsub("[0-9]","", names(cc))
+  names(cc) <- gsub(tolower(name),"",tolower(names(cc)))
+  names(cc) <- gsub("[._]+$", "",names(cc))
   cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",3)))
   cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",4)))
 

@@ -99,6 +99,8 @@ for (iproduct in seq(1,length(products))){
                                              dirs[iproduct],paste0("GPP.",cproduct))
 
   product.config[["dest.dir"]] <- file.path(dir.name,cproduct)
+  product.config[["name"]] <- cproduct
+
 
   productconfig.file <- file.path(dir.name,cproduct,
                                 paste0("config.",cproduct,".RDS"))

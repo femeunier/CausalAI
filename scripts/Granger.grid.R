@@ -95,6 +95,9 @@ for (cmodel in models){
   model.config <- main.config
   model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
   model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
+  model.config[["dest.dir"]] <- file.path(dir.name,cmodel)
+  model.config[["name"]] <- cmodel
+
 
   modelconfig.file <- file.path(dir.name,cmodel,
                                 paste0("config.",cmodel,".RDS"))

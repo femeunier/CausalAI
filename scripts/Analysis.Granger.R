@@ -18,7 +18,8 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    cQoF <- tryCatch(readRDS(cfile),
+    cQoF <- tryCatch(readRDS(cfile) %>%
+                       mutate(model = cmodel),
                      error = function(e) NULL)
 
     if (is.null(cQoF)) next()
@@ -38,7 +39,8 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    call.test <- tryCatch(readRDS(cfile),
+    call.test <- tryCatch(readRDS(cfile) %>%
+                            mutate(model = cmodel),
                           error = function(e) NULL)
 
     if (is.null(call.test)) next()
@@ -58,7 +60,8 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    cSHAP <- tryCatch(readRDS(cfile),
+    cSHAP <- tryCatch(readRDS(cfile) %>%
+                        mutate(model = cmodel),
                       error = function(e) NULL)
 
     if (is.null(cSHAP)) next()
@@ -79,7 +82,8 @@ for (cmodel in models){
                       full.names = TRUE)
 
   for (cfile in files){
-    cresult <- tryCatch(readRDS(cfile),
+    cresult <- tryCatch(readRDS(cfile) %>%
+                          mutate(model = cmodel),
                         error = function(e) NULL)
 
     if (is.null(cresult)) next()
