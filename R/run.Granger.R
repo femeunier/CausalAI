@@ -166,9 +166,9 @@ run.Granger <- function(config.file){
       left_join(monthly_df,
                 by = c("year","month")) %>%
       na.omit() %>%
-      filter(year >= year.min,
+      dplyr::filter(year >= year.min,
              year <= year.max) %>%
-      select(any_of(c(x_var,y_var)))
+      dplyr::select(any_of(c(x_var,y_var)))
 
     df <- all %>%
       dplyr::select(-any_of(c("lon","lat","lon_lat",
