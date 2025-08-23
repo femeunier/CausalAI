@@ -48,12 +48,13 @@ main.config <- list(lags = 12,
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
+models <- models[1]
 
 raster.grid <- main.config[["raster.grid"]]
 
 land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
-df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
+all.df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   rename(lon = x, lat = y) %>%
   filter(value > 0.25) %>%
   filter(abs(lat) < 25) %>%
@@ -61,17 +62,7 @@ df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   ungroup() %>%
   mutate(id = 1:n())
 
-world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-
-ggplot(data = df.lon.lat) +
-  geom_raster(aes(x = lon, y = lat,
-                  fill = value)) +
-  geom_sf(data = world,fill = NA, color = "grey17") +
-  scale_y_continuous(limits = c(-1,1)*23.5) +
-  theme_map()
-
-all.lons_lats <- df.lon.lat$lon_lat
-Ntot.run <- length(all.lons_lats)
+all.lons_lats <- all.df.lon.lat$lon_lat
 
 dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
@@ -90,6 +81,43 @@ for (cmodel in models){
 
   dir.create(file.path(dir.name,cmodel),showWarnings = FALSE)
 
+  #######################################################################################################
+  # We first check what is done already
+
+
+  files <- list.files(file.path("./outputs/Granger/",cmodel),
+                      pattern = "^QoF.*Granger.*.RDS",
+                      full.names = TRUE)
+  max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",3)))
+  point <- 3
+  while(all(is.na(max.compt))){
+    max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",point+1)))
+    point <- point + 1
+  }
+  max.compt <- max(max.compt)
+
+
+  df.runs <- data.frame()
+  for (cfile in files){
+    cdf <- tryCatch(readRDS(cfile) %>%
+                      mutate(model = cmodel),
+                    error = function(e) NULL)
+
+    if (is.null(cdf)) next()
+    if (nrow(cdf) == 0) next()
+
+    df.runs <- bind_rows(df.runs,
+                         cdf)
+  }
+  finished.all.lons.lat <- df.runs[["lon_lat"]]
+
+  all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
+  df.lon.lat <- all.df.lon.lat %>%
+    filter(lon_lat %in% all.lons_lats)
+  Ntot.run <- length(all.lons_lats)
+
+  #######################################################################################################
+
   model.config <- main.config
   model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
   model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
@@ -103,7 +131,7 @@ for (cmodel in models){
   saveRDS(model.config,
           modelconfig.file)
 
-  compt <- 1
+  compt <- (max.compt+1)
   for (istart in seq(1,Ntot.run,Nrun.max.per.job)){
     lons_lats <- df.lon.lat %>%
       filter(id %in% c(istart:(istart + Nrun.max.per.job -1))) %>%
@@ -142,4 +170,4 @@ dumb <- write_bash_submission(file = file.path(getwd(),
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/Granger.grid.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/continue.Granger.grid.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
