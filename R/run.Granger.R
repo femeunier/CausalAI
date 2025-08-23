@@ -134,12 +134,12 @@ run.Granger <- function(config.file){
 
   for (ilon.lat in seq(1,length(lons_lats))){
 
-    print(ilon.lat/length(lons_lats))
-
     clon.lat <- lons_lats[ilon.lat]
 
     clon <- as.numeric(strsplit(clon.lat,"\\_")[[1]][1])
     clat <- as.numeric(strsplit(clon.lat,"\\_")[[1]][2])
+
+    print(paste0(ilon.lat/length(lons_lats),"-",clon,"/",clat))
 
     # We exctract
     temp.climate <- terra::extract(climate.rspld,
