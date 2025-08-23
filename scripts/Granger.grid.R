@@ -45,9 +45,14 @@ main.config <- list(lags = 12,
 
                     time2save = 600)
 
+
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
+
+models <- c("CLM6.0",
+            "LPJ-GUESS",
+            "LPJmL")
 
 raster.grid <- main.config[["raster.grid"]]
 

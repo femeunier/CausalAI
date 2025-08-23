@@ -102,7 +102,7 @@ run.Granger <- function(config.file){
   cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",4)))
 
   pos <- 3
-  while (all(is.na(cc.years))){
+  while (all(is.na(cc.years))| (max(cc.years) < 20)){
     cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",pos)))
     cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",pos+1)))
     pos <- pos + 1
