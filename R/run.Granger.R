@@ -82,6 +82,13 @@ run.Granger <- function(config.file){
   msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",3)))
   msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",4)))
 
+  pos <- 3
+  while (all(is.na(cc.years)) | (max(msl.years) < 20)){
+    msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",pos)))
+    msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",pos+1)))
+    pos <- pos + 1
+  }
+
   cc.files <- list.files(path = dirname(CC.location),
                           pattern = paste0("^",
                                            basename(CC.location),
