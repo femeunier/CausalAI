@@ -16,7 +16,7 @@ Nrun.max.per.job <- 300
 products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
               "GOSIF","Zhou","GLASS","Sun","Bi",
               "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-              "MODIS") # "Zheng"
+              "MODIS")
 
 dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
