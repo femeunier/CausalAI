@@ -78,7 +78,6 @@ run.Granger <- function(config.file){
     names(msl) <- rep("top.sml",length(names(msl)))
   }
 
-
   msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",3)))
   msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",4)))
 
@@ -244,6 +243,10 @@ run.Granger <- function(config.file){
     #                 error = function(e) NULL)
     #
     # if (is.null(fit)) next()
+
+    if (initial > nrow(df.train) | is.null(initial)){
+      initial <- floor(0.7*nrow(df.train))
+    }
 
     fit <- tune_xgb_with_caret(train = data.matrix(dfl.train),
                                y = as.numeric(y.train),
