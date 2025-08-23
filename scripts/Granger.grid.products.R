@@ -65,7 +65,7 @@ land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
 df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   rename(lon = x, lat = y) %>%
-  filter(value > 0) %>%
+  filter(value > 0.25) %>%
   filter(abs(lat)< 25) %>%
   mutate(lon_lat = paste0(lon,"_",lat)) %>%
   ungroup() %>%
