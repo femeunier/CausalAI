@@ -23,9 +23,6 @@ dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
           "MODIS_GPP")
 
-products <- c("Zhou","Sun","Bi","Madani","Zhang")
-dirs <- c("Zhou","Sun","Bi","Madani","Zhang")
-
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -66,7 +63,7 @@ raster.grid <- main.config[["raster.grid"]]
 
 land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
-df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
+all.df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   rename(lon = x, lat = y) %>%
   filter(value > 0.25) %>%
   filter(abs(lat)< 25) %>%
@@ -74,8 +71,7 @@ df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
   ungroup() %>%
   mutate(id = 1:n())
 
-all.lons_lats <- df.lon.lat$lon_lat
-Ntot.run <- length(all.lons_lats)
+all.lons_lats <- all.df.lon.lat$lon_lat
 
 dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
@@ -96,22 +92,57 @@ for (iproduct in seq(1,length(products))){
 
   dir.create(file.path(dir.name,cproduct),showWarnings = FALSE)
 
+  #######################################################################################################
+  # We first check what is done already
+
+  files <- list.files(file.path("./outputs/Granger/",cproduct),
+                      pattern = "^QoF.*Granger.*.RDS",
+                      full.names = TRUE)
+  max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",3)))
+  point <- 3
+  while(all(is.na(max.compt))){
+    max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",point+1)))
+    point <- point + 1
+  }
+  max.compt <- max(max.compt)
+
+  df.runs <- data.frame()
+  for (cfile in files){
+    cdf <- tryCatch(readRDS(cfile) %>%
+                      mutate(product = cproduct),
+                    error = function(e) NULL)
+
+    if (is.null(cdf)) next()
+    if (nrow(cdf) == 0) next()
+
+    df.runs <- bind_rows(df.runs,
+                         cdf)
+  }
+  finished.all.lons.lat <- df.runs[["lon_lat"]]
+
+  all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
+  df.lon.lat <- all.df.lon.lat %>%
+    filter(lon_lat %in% all.lons_lats)
+  Ntot.run <- length(all.lons_lats)
+
+  ######################################################################
+
   product.config <- main.config
   product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/GLEAM_SMs_")
   product.config[["CC.location"]] <- file.path(main.dir,
-                                             dirs[iproduct],paste0("GPP.",cproduct))
+                                               dirs[iproduct],paste0("GPP.",cproduct))
 
   product.config[["dest.dir"]] <- file.path(dir.name,cproduct)
   product.config[["name"]] <- cproduct
 
 
   productconfig.file <- file.path(dir.name,cproduct,
-                                paste0("config.",cproduct,".RDS"))
+                                  paste0("config.",cproduct,".RDS"))
 
   saveRDS(product.config,
           productconfig.file)
 
-  compt <- 1
+  compt <- (max.compt+1)
   for (istart in seq(1,Ntot.run,Nrun.max.per.job)){
     lons_lats <- df.lon.lat %>%
       filter(id %in% c(istart:(istart + Nrun.max.per.job -1))) %>%
@@ -150,4 +181,4 @@ dumb <- write_bash_submission(file = file.path(getwd(),
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/Granger.grid.products.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/continue.Granger.grid.products.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

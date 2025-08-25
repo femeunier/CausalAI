@@ -134,6 +134,8 @@ run.Granger <- function(config.file){
 
   for (ilon.lat in seq(1,length(lons_lats))){
 
+    skip <- FALSE
+
     clon.lat <- lons_lats[ilon.lat]
 
     clon <- as.numeric(strsplit(clon.lat,"\\_")[[1]][1])
@@ -208,97 +210,123 @@ run.Granger <- function(config.file){
 
     if(all(df[[y_var]] == 0) |
        all(is.na(df[[y_var]]))){
-      next()
+
+      outcome = "not.run.all.zero"
+      skip <- TRUE
     }
 
     if(all(abs(df[[y_var]]) < threshold)){
-      next()
+
+      outcome = "not.run.all.small"
+      skip <- TRUE
     }
 
-    mu <- sapply(df, mean) ; mu[y_var] <- 0
-    sdv <- sapply(df, sd) ; sdv[y_var] <- 1
+    if (!skip){
 
-    df <- scale_z(df, mu, sdv)
-    dfl <- make_lags(df, max_lag = lags) %>%
-      na.omit()
+      mu <- sapply(df, mean) ; mu[y_var] <- 0
+      sdv <- sapply(df, sd) ; sdv[y_var] <- 1
 
-    smp_size <- floor(0.8 * nrow(dfl))
-    train_ind <- 1:smp_size
+      df <- scale_z(df, mu, sdv)
+      dfl <- make_lags(df, max_lag = lags) %>%
+        na.omit()
 
-    df.train <- df[train_ind,c(x_var,y_var)]
-    dfl.train <- as.matrix(dfl[train_ind,
-                               setdiff(colnames(dfl), y_var)])
-    y.train <- as.matrix(dfl[train_ind, y_var])
+      smp_size <- floor(0.8 * nrow(dfl))
+      train_ind <- 1:smp_size
 
-    df.test <- df[-train_ind,c(x_var,y_var)]
-    dfl.test <- as.matrix(dfl[-train_ind, setdiff(colnames(dfl), y_var)])
-    y.test <- as.matrix(dfl[-train_ind, y_var])
+      df.train <- df[train_ind,c(x_var,y_var)]
+      dfl.train <- as.matrix(dfl[train_ind,
+                                 setdiff(colnames(dfl), y_var)])
+      y.train <- as.matrix(dfl[train_ind, y_var])
+
+      df.test <- df[-train_ind,c(x_var,y_var)]
+      dfl.test <- as.matrix(dfl[-train_ind, setdiff(colnames(dfl), y_var)])
+      y.test <- as.matrix(dfl[-train_ind, y_var])
 
 
-    if (initial > nrow(df.train) | is.null(initial)){
-      initial <- floor(0.7*nrow(df.train))
+      if (initial > nrow(df.train) | is.null(initial)){
+        initial <- floor(0.7*nrow(df.train))
+      }
+
+      fit <- tryCatch(tune_xgb_with_caret(train = data.matrix(dfl.train),
+                                          y = as.numeric(y.train),
+                                          grid = Grid,
+                                          target = y_var,
+                                          lags = lags,
+                                          initial = initial, horizon = horizon, skip = skip),
+                      error = function(e) NULL)
+
+      if (!is.null(fite)){
+        bestTune <- fit$bestTune
+        bestModel <- fit$finalModel
+
+        y.pred <- predict(bestModel,
+                          dfl.test[,fit$finalModel$feature_names])
+        RMSE <- caret::RMSE(y.pred, y.test)
+        RSQ <- rsq_vec(as.numeric(y.pred), as.vector(y.test))
+        rBias <- mean(100*(y.test - y.pred)/y.test,
+                      na.rm = T)
+      } else {
+        RMSE <- NA_real_
+        RSQ <- NA_real_
+        rBias <- NA_real_
+        outcome <- "Bug.when.fitting"
+        skip <- TRUE
+      }
     }
 
-    fit <- tryCatch(tune_xgb_with_caret(train = data.matrix(dfl.train),
-                                        y = as.numeric(y.train),
-                                        grid = Grid,
-                                        target = y_var,
-                                        lags = lags,
-                                        initial = initial, horizon = horizon, skip = skip),
-                    error = function(e) NULL)
 
-    if (is.null(fit)) next()
+    if (!skip){
 
-    bestTune <- fit$bestTune
-    bestModel <- fit$finalModel
+      run <- tryCatch(ml_granger_all_causes(df, dfl,
+                                            target = "gpp", lags = lags,
+                                            initial = initial, horizon = horizon,
+                                            step = step,
+                                            bestTune = bestTune),
+                      error = function(e) NULL)
 
-    y.pred <- predict(bestModel,
-                      dfl.test[,fit$finalModel$feature_names])
-    RMSE <- caret::RMSE(y.pred, y.test)
-    RSQ <- rsq_vec(as.numeric(y.pred), as.vector(y.test))
-    rBias <- mean(100*(y.test - y.pred)/y.test,
-                  na.rm = T)
+
+      if (is.null(run)){
+
+        outcome <- "Bug.with.causality"
+        skip <- TRUE
+      }
+    }
+
 
     df.QoF <- bind_rows(df.QoF,
                         data.frame(lon_lat = clon.lat,
+                                   outcome,
                                    RMSE,
                                    Rsq = RSQ,
                                    rBias,
                                    mean.y = mean(df[[y_var]],na.rm = TRUE),
                                    sd.y = sd(df[[y_var]],na.rm = TRUE)))
 
-    all.test <- bind_rows(all.test,
-                          data.frame(pred = y.pred,
-                                     obs = y.test,
-                                     lon_lat = clon.lat))
+    if (!skip){
+      all.test <- bind_rows(all.test,
+                            data.frame(pred = y.pred,
+                                       obs = y.test,
+                                       lon_lat = clon.lat))
 
-    all.X.test <- bind_rows(all.X.test,
-                            (as.data.frame(dfl.test)) %>%
+      all.X.test <- bind_rows(all.X.test,
+                              (as.data.frame(dfl.test)) %>%
+                                mutate(lon_lat = clon.lat))
+
+      results <- run$results %>%
+        as.data.frame()
+
+      all.results <- bind_rows(all.results,
+                               results %>%
+                                 mutate(lon_lat = clon.lat))
+
+      shap_df <- run$shap_lags %>%
+        as.data.frame()
+
+      all.SHAP <- bind_rows(all.SHAP,
+                            shap_df %>%
                               mutate(lon_lat = clon.lat))
 
-    run <- tryCatch(ml_granger_all_causes(df, dfl,
-                                          target = "gpp", lags = lags,
-                                          initial = initial, horizon = horizon,
-                                          step = step,
-                                          bestTune = bestTune),
-                    error = function(e) NULL)
-
-
-    if (is.null(run)) next()
-
-    results <- run$results %>%
-      as.data.frame()
-
-    all.results <- bind_rows(all.results,
-                             results %>%
-                               mutate(lon_lat = clon.lat))
-
-    shap_df <- run$shap_lags %>%
-      as.data.frame()
-
-    all.SHAP <- bind_rows(all.SHAP,
-                          shap_df %>%
-                            mutate(lon_lat = clon.lat))
+    }
 
     elapsed <- as.numeric(difftime(Sys.time(), hour_start, units = "secs"))
 

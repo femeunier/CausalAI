@@ -11,7 +11,7 @@ library(ggthemes)
 ###############################################################
 # Settings
 
-Nrun.max.per.job <- 300
+Nrun.max.per.job <- 20
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -48,7 +48,7 @@ main.config <- list(lags = 12,
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
-models <- models[1]
+models <- models[c(1,3)]
 
 raster.grid <- main.config[["raster.grid"]]
 
