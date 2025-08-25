@@ -17,6 +17,8 @@ tune_xgb_with_caret <- function(train,
   if (requireNamespace("future", quietly = TRUE)) {
     Ncores <- as.numeric(future::availableCores())
     future::plan("multisession", workers = Ncores)
+  } else {
+    Ncores <- 1
   }
 
   train <- train[, grep("_L[0-9]+$", colnames(train)), drop = FALSE]  # only lagged features
