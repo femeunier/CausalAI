@@ -8,7 +8,7 @@ run.Granger <- function(config.file){
   name <- config[["name"]]
   initial <- config[["initial"]]
   horizon <- config[["horizon"]]
-  skip <- config[["skip"]]
+  skip.num <- config[["skip"]]
   step <- config[["step"]]
 
   threshold <- config[["threshold"]]
@@ -252,7 +252,7 @@ run.Granger <- function(config.file){
                                           grid = Grid,
                                           target = y_var,
                                           lags = lags,
-                                          initial = initial, horizon = horizon, skip = skip),
+                                          initial = initial, horizon = horizon, skip = skip.num),
                       error = function(e) NULL)
 
       if (!is.null(fit)){
