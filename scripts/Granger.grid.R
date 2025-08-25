@@ -50,7 +50,7 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
 
-models <- c("CLM6.0")
+models <- c("JSBACH")
 
 raster.grid <- main.config[["raster.grid"]]
 

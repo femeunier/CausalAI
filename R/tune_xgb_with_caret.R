@@ -46,18 +46,36 @@ tune_xgb_with_caret <- function(train,
   y <- y[keep]
 
 
+  slices <- createTimeSlices(1:nrow(x),
+                             initialWindow = initial,
+                             horizon       = horizon,
+                             fixedWindow   = TRUE,
+                             skip          = skip)
+
   ctrl <- trainControl(
-    method = "timeslice",
-    initialWindow = initial,
-    horizon = horizon,
-    fixedWindow = TRUE,
-    summaryFunction = defaultSummary,  # <-- regression metrics (RMSE/RSquared/MAE)
-    classProbs = FALSE,                # <-- must be FALSE for regression
+    method = "cv",                 # we'll provide indices manually
+    index = slices$train,          # training slices
+    indexOut = slices$test,        # testing slices
+    summaryFunction = defaultSummary,
+    classProbs = FALSE,
     savePredictions = "final",
     verboseIter = TRUE,
-    skip = skip,
     allowParallel = TRUE
   )
+
+
+  # ctrl <- trainControl(
+  #   method = "timeslice",
+  #   initialWindow = initial,
+  #   horizon = horizon,
+  #   fixedWindow = TRUE,
+  #   summaryFunction = defaultSummary,  # <-- regression metrics (RMSE/RSquared/MAE)
+  #   classProbs = FALSE,                # <-- must be FALSE for regression
+  #   savePredictions = "final",
+  #   verboseIter = TRUE,
+  #   skip = skip,
+  #   allowParallel = TRUE
+  # )
 
   fit <- train(
     x = as.data.frame(x),

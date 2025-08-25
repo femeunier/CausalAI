@@ -6,6 +6,7 @@ library(tidyr)
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
+models <- c("CABLE-POP","CLM6.0","JSBACH")
 # models <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
 #             "GOSIF","Zhou","GLASS","Sun","Bi",
 #             "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",

@@ -48,7 +48,7 @@ main.config <- list(lags = 12,
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
-models <- models[c(1,3)]
+models <- models[c(3)]
 
 raster.grid <- main.config[["raster.grid"]]
 
@@ -113,7 +113,9 @@ for (cmodel in models){
 
   all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
   df.lon.lat <- all.df.lon.lat %>%
-    filter(lon_lat %in% all.lons_lats)
+    filter(lon_lat %in% all.lons_lats) %>%
+    ungroup() %>%
+    mutate(id = 1:n())
   Ntot.run <- length(all.lons_lats)
 
   #######################################################################################################
