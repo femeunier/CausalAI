@@ -85,7 +85,7 @@ tune_xgb_with_caret <- function(train,
     tuneGrid = grid,
     metric = "RMSE",
     verbosity = 1,
-    nthread = 16)
+    nthread = Ncores)
 
   future::plan("sequential")
 
