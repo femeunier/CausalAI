@@ -255,7 +255,7 @@ run.Granger <- function(config.file){
                                           initial = initial, horizon = horizon, skip = skip),
                       error = function(e) NULL)
 
-      if (!is.null(fite)){
+      if (!is.null(fit)){
         bestTune <- fit$bestTune
         bestModel <- fit$finalModel
 
@@ -272,6 +272,11 @@ run.Granger <- function(config.file){
         outcome <- "Bug.when.fitting"
         skip <- TRUE
       }
+    } else {
+      RMSE <- NA_real_
+      RSQ <- NA_real_
+      rBias <- NA_real_
+      skip <- TRUE
     }
 
 
@@ -289,6 +294,10 @@ run.Granger <- function(config.file){
 
         outcome <- "Bug.with.causality"
         skip <- TRUE
+      } else {
+
+        outcome <- "fine"
+
       }
     }
 
