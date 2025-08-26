@@ -69,24 +69,13 @@ run.Granger <- function(config.file){
                                                basename(SWC.location),
                                                ".*.tif$"),
                           full.names = TRUE)
-  msl <- rast(msl.files)
-  names(msl) <- gsub("[0-9]","", names(msl))
-  names(msl) <- gsub(tolower(name),"",tolower(names(msl)))
-  names(msl) <- gsub("[._]+$", "",names(msl))
+  msl.rspld <- rast(msl.files)
+  cnames <- names(msl.rspld)
 
-  if (any(grepl("gleam_sms",tolower(names(msl))))){
-    names(msl) <- rep("top.sml",length(names(msl)))
-  }
+  cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",1)))
+  cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",2)))
 
-  msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",3)))
-  msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",4)))
-
-  pos <- 3
-  while (all(is.na(msl.years)) | (max(msl.years) < 20)){
-    msl.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",pos)))
-    msl.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(msl.files)),"_|\\."),"[[",pos+1)))
-    pos <- pos + 1
-  }
+  names(msl.rspld) <- rep("top.sml",nlyr(msl.rspld))
 
   cc.files <- list.files(path = dirname(CC.location),
                           pattern = paste0("^",
@@ -105,7 +94,6 @@ run.Granger <- function(config.file){
   # We make sure all grids are aligned
 
   climate.rspld <- terra::resample(climate,rast(raster.grid),method = "bilinear")
-  msl.rspld <- terra::resample(msl,rast(raster.grid),method = "bilinear")
 
   ##################################################################
   # Timer
