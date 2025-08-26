@@ -11,7 +11,7 @@ library(ggthemes)
 ###############################################################
 # Settings
 
-Nrun.max.per.job <- 20
+Nrun.max.per.job <- 40
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -48,21 +48,12 @@ main.config <- list(lags = 12,
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
-models <- models[c(3)]
+models <- models[c(5)]
 
 raster.grid <- main.config[["raster.grid"]]
 
 land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
-all.df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
-  rename(lon = x, lat = y) %>%
-  filter(value > 0.25) %>%
-  filter(abs(lat) < 25) %>%
-  mutate(lon_lat = paste0(lon,"_",lat)) %>%
-  ungroup() %>%
-  mutate(id = 1:n())
-
-all.lons_lats <- all.df.lon.lat$lon_lat
 
 dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
@@ -82,8 +73,19 @@ for (cmodel in models){
   dir.create(file.path(dir.name,cmodel),showWarnings = FALSE)
 
   #######################################################################################################
-  # We first check what is done already
+  all.df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
+    rename(lon = x, lat = y) %>%
+    filter(value > 0.25) %>%
+    filter(abs(lat) < 25) %>%
+    mutate(lon_lat = paste0(lon,"_",lat)) %>%
+    ungroup() %>%
+    mutate(id = 1:n())
 
+  all.lons_lats <- all.df.lon.lat$lon_lat
+
+
+  #######################################################################################################
+  # We first check what is done already
 
   files <- list.files(file.path("./outputs/Granger/",cmodel),
                       pattern = "^QoF.*Granger.*.RDS",
@@ -109,7 +111,9 @@ for (cmodel in models){
     df.runs <- bind_rows(df.runs,
                          cdf)
   }
-  finished.all.lons.lat <- df.runs[["lon_lat"]]
+  finished.all.lons.lat <- df.runs %>%
+    filter(!grepl("bug",tolower(outcome))) %>%
+    pull("lon_lat")
 
   all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
   df.lon.lat <- all.df.lon.lat %>%

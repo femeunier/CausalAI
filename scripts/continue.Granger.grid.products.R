@@ -23,7 +23,6 @@ dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
           "MODIS_GPP")
 
-
 main.config <- list(lags = 12,
                     initial = 200,
                     horizon = 12,
@@ -63,15 +62,6 @@ raster.grid <- main.config[["raster.grid"]]
 
 land.frac <- rasterFromXYZ(readRDS("./outputs/landFrac.RDS"))
 land.frac.rspld <- raster::resample(land.frac,raster.grid)
-all.df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
-  rename(lon = x, lat = y) %>%
-  filter(value > 0.25) %>%
-  filter(abs(lat)< 25) %>%
-  mutate(lon_lat = paste0(lon,"_",lat)) %>%
-  ungroup() %>%
-  mutate(id = 1:n())
-
-all.lons_lats <- all.df.lon.lat$lon_lat
 
 dir.name <- "/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/Granger/"
 dir.create(dir.name,showWarnings = FALSE)
@@ -90,6 +80,18 @@ for (iproduct in seq(1,length(products))){
 
   print(paste0(cproduct))
 
+  ######################################################################################################
+
+  all.df.lon.lat <- as.data.frame(land.frac.rspld,xy = TRUE) %>%
+    rename(lon = x, lat = y) %>%
+    filter(value > 0.25) %>%
+    filter(abs(lat)< 25) %>%
+    mutate(lon_lat = paste0(lon,"_",lat)) %>%
+    ungroup() %>%
+    mutate(id = 1:n())
+
+  all.lons_lats <- all.df.lon.lat$lon_lat
+
   dir.create(file.path(dir.name,cproduct),showWarnings = FALSE)
 
   #######################################################################################################
@@ -98,32 +100,48 @@ for (iproduct in seq(1,length(products))){
   files <- list.files(file.path("./outputs/Granger/",cproduct),
                       pattern = "^QoF.*Granger.*.RDS",
                       full.names = TRUE)
-  max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",3)))
-  point <- 3
-  while(all(is.na(max.compt))){
-    max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",point+1)))
-    point <- point + 1
+  if (length(files) == 0){
+    max.compt <- 0
+    df.lon.lat <- all.df.lon.lat
+    Ntot.run <- length(all.lons_lats)
+
+  } else {
+    max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",3)))
+    point <- 3
+    while(all(is.na(max.compt))){
+      max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",point+1)))
+      point <- point + 1
+    }
+    max.compt <- max(max.compt)
+
+    df.runs <- data.frame()
+    for (cfile in files){
+      cdf <- tryCatch(readRDS(cfile) %>%
+                        mutate(product = cproduct),
+                      error = function(e) NULL)
+
+      if (is.null(cdf)) next()
+      if (nrow(cdf) == 0) next()
+
+      df.runs <- bind_rows(df.runs,
+                           cdf)
+    }
+
+    finished.all.lons.lat <- df.runs %>%
+      filter(!grepl("bug",tolower(outcome))) %>%
+      pull("lon_lat")
+
+
+    all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
+
+    if (length(all.lons_lats) == 0) next
+
+    df.lon.lat <- all.df.lon.lat %>%
+      filter(lon_lat %in% all.lons_lats) %>%
+      ungroup() %>%
+      mutate(id = 1:n())
+    Ntot.run <- length(all.lons_lats)
   }
-  max.compt <- max(max.compt)
-
-  df.runs <- data.frame()
-  for (cfile in files){
-    cdf <- tryCatch(readRDS(cfile) %>%
-                      mutate(product = cproduct),
-                    error = function(e) NULL)
-
-    if (is.null(cdf)) next()
-    if (nrow(cdf) == 0) next()
-
-    df.runs <- bind_rows(df.runs,
-                         cdf)
-  }
-  finished.all.lons.lat <- df.runs[["lon_lat"]]
-
-  all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
-  df.lon.lat <- all.df.lon.lat %>%
-    filter(lon_lat %in% all.lons_lats)
-  Ntot.run <- length(all.lons_lats)
 
   ######################################################################
 

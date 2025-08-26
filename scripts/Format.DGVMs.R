@@ -12,9 +12,19 @@ library(glue)
 models <- (c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT"))
-models <- models[3:length(models)]
+models <- rev(models[6:10])
+
+dx_user <- NULL   # e.g., 0.25
+dy_user <- NULL   # e.g., 0.25
+bbox     <- NULL  # c(xmin, xmax, ymin, ymax) or NULL to use data-tight bbox
 
 main_dir <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM"
+
+wrap_lon <- function(lon) {
+  lon <- as.numeric(lon)
+  lon <- ifelse(lon > 180, lon - 360, lon)
+  return(lon)
+}
 
 for (imodel in seq(1,length(models))){
 
@@ -51,27 +61,73 @@ for (imodel in seq(1,length(models))){
       mutate(ym = sprintf("%04d_%02d", year, month)) %>%
       filter(ym == ymk) %>%
       mutate(
-        lon = as.numeric(lon),
-        lat = as.numeric(lat))
+        lon = wrap_lon(lon),
+        lat = as.numeric(lat)) %>%
+      filter(is.finite(lon), is.finite(lat))
 
-    # Build a template grid from lon/lat
-    lon_vals <- sort(unique(dsub$lon))
-    lat_vals <- sort(unique(dsub$lat))
-    ext <- ext(min(lon_vals), max(lon_vals), min(lat_vals), max(lat_vals))
-    dx <- min(diff(lon_vals))
-    dy <- min(diff(lat_vals))
-    tem <- rast(ext, resolution = c(dx, dy), crs = "EPSG:4326")
+    stopifnot(nrow(dsub) > 0)
 
-    # Rasterize each variable
-    layers <- lapply(vars, function(v) {
-      vsub <- vect(dsub[, c("lon","lat",v)],
-                   geom = c("lon","lat"), crs = "EPSG:4326")
-      r <- rasterize(vsub, tem, field = v)
-      names(r) <- v
+    # 2) Choose grid spacing (median of unique diffs is robust to irregular sampling)
+    if (is.null(dx_user)) {
+      lonu <- sort(unique(round(dsub$lon, 6)))
+      dx   <- suppressWarnings(median(diff(lonu), na.rm = TRUE))
+      if (!is.finite(dx) || dx <= 0) dx <- 0.25
+    } else dx <- dx_user
+
+    if (is.null(dy_user)) {
+      latu <- sort(unique(round(dsub$lat, 6)))
+      dy   <- suppressWarnings(median(diff(latu), na.rm = TRUE))
+      if (!is.finite(dy) || dy <= 0) dy <- 0.25
+    } else dy <- dy_user
+
+    # 3) Build a regular template grid
+    if (is.null(bbox)) {
+      xmin <- min(dsub$lon, na.rm = TRUE) - dx/2
+      xmax <- max(dsub$lon, na.rm = TRUE) + dx/2
+      ymin <- min(dsub$lat, na.rm = TRUE) - dy/2
+      ymax <- max(dsub$lat, na.rm = TRUE) + dy/2
+    } else {
+      xmin <- bbox[1]; xmax <- bbox[2]; ymin <- bbox[3]; ymax <- bbox[4]
+    }
+
+    # ensure integer number of cells, then re-tighten edges to avoid drift
+    ncol <- max(1L, as.integer(round((xmax - xmin)/dx)))
+    nrow <- max(1L, as.integer(round((ymax - ymin)/dy)))
+    xmax <- xmin + ncol * dx
+    ymax <- ymin + nrow * dy
+
+    tem <- rast(ncols = ncol, nrows = nrow,
+                xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+                crs  = "EPSG:4326")
+
+    # 4) Map points to cell indices (no fp/border loss)
+    eps <- .Machine$double.eps * 100
+    col_idx <- floor((dsub$lon - xmin + eps)/dx) + 1L               # west→east
+    row_idx <- floor((ymax - dsub$lat + eps)/dy) + 1L               # top row = 1
+
+    # keep only points that land inside
+    ok <- col_idx >= 1L & col_idx <= ncol & row_idx >= 1L & row_idx <= nrow &
+      is.finite(col_idx) & is.finite(row_idx)
+    if (!any(ok)) stop("No points fall inside the target grid. Check bbox/dx/dy.")
+
+    col_idx <- col_idx[ok]; row_idx <- row_idx[ok]
+    cell_id <- cellFromRowCol(tem, row = row_idx, col = col_idx)
+
+    # 5) Fill each variable layer by aggregating duplicates (mean)
+    make_layer <- function(vals, nm) {
+      v <- as.numeric(vals)[ok]
+      out <- rep(NA_real_, ncell(tem))
+      if (any(!is.na(v))) {
+        m <- tapply(v, cell_id, mean, na.rm = TRUE)   # change to sum/median if needed
+        out[as.integer(names(m))] <- as.numeric(m)
+      }
+      r <- tem
+      values(r) <- out
+      names(r) <- nm
       r
-    })
+    }
 
-    # Combine all variables into one multilayer raster
+    layers <- lapply(vars, function(v) make_layer(dsub[[v]], v))
     rstack <- do.call(c, layers)
 
     # Write one GeoTIFF for this year-month
@@ -111,27 +167,74 @@ for (imodel in seq(1,length(models))){
       mutate(ym = sprintf("%04d_%02d", year, month)) %>%
       filter(ym == ymk) %>%
       mutate(
-        lon = as.numeric(lon),
-        lat = as.numeric(lat))
+        lon = wrap_lon(lon),
+        lat = as.numeric(lat)
+      ) %>%
+      filter(is.finite(lon), is.finite(lat))
 
-    # Build a template grid from lon/lat
-    lon_vals <- sort(unique(dsub$lon))
-    lat_vals <- sort(unique(dsub$lat))
-    ext <- ext(min(lon_vals), max(lon_vals), min(lat_vals), max(lat_vals))
-    dx <- min(diff(lon_vals))
-    dy <- min(diff(lat_vals))
-    tem <- rast(ext, resolution = c(dx, dy), crs = "EPSG:4326")
+    stopifnot(nrow(dsub) > 0)
 
-    # Rasterize each variable
-    layers <- lapply(vars, function(v) {
-      vsub <- vect(dsub[, c("lon","lat",v)],
-                   geom = c("lon","lat"), crs = "EPSG:4326")
-      r <- rasterize(vsub, tem, field = v)
-      names(r) <- v
+    # 2) Choose grid spacing (median of unique diffs is robust to irregular sampling)
+    if (is.null(dx_user)) {
+      lonu <- sort(unique(round(dsub$lon, 6)))
+      dx   <- suppressWarnings(median(diff(lonu), na.rm = TRUE))
+      if (!is.finite(dx) || dx <= 0) dx <- 0.25
+    } else dx <- dx_user
+
+    if (is.null(dy_user)) {
+      latu <- sort(unique(round(dsub$lat, 6)))
+      dy   <- suppressWarnings(median(diff(latu), na.rm = TRUE))
+      if (!is.finite(dy) || dy <= 0) dy <- 0.25
+    } else dy <- dy_user
+
+    # 3) Build a regular template grid
+    if (is.null(bbox)) {
+      xmin <- min(dsub$lon, na.rm = TRUE) - dx/2
+      xmax <- max(dsub$lon, na.rm = TRUE) + dx/2
+      ymin <- min(dsub$lat, na.rm = TRUE) - dy/2
+      ymax <- max(dsub$lat, na.rm = TRUE) + dy/2
+    } else {
+      xmin <- bbox[1]; xmax <- bbox[2]; ymin <- bbox[3]; ymax <- bbox[4]
+    }
+
+    # ensure integer number of cells, then re-tighten edges to avoid drift
+    ncol <- max(1L, as.integer(round((xmax - xmin)/dx)))
+    nrow <- max(1L, as.integer(round((ymax - ymin)/dy)))
+    xmax <- xmin + ncol * dx
+    ymax <- ymin + nrow * dy
+
+    tem <- rast(ncols = ncol, nrows = nrow,
+                xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+                crs  = "EPSG:4326")
+
+    # 4) Map points to cell indices (no fp/border loss)
+    eps <- .Machine$double.eps * 100
+    col_idx <- floor((dsub$lon - xmin + eps)/dx) + 1L               # west→east
+    row_idx <- floor((ymax - dsub$lat + eps)/dy) + 1L               # top row = 1
+
+    # keep only points that land inside
+    ok <- col_idx >= 1L & col_idx <= ncol & row_idx >= 1L & row_idx <= nrow &
+      is.finite(col_idx) & is.finite(row_idx)
+    if (!any(ok)) stop("No points fall inside the target grid. Check bbox/dx/dy.")
+
+    col_idx <- col_idx[ok]; row_idx <- row_idx[ok]
+    cell_id <- cellFromRowCol(tem, row = row_idx, col = col_idx)
+
+    # 5) Fill each variable layer by aggregating duplicates (mean)
+    make_layer <- function(vals, nm) {
+      v <- as.numeric(vals)[ok]
+      out <- rep(NA_real_, ncell(tem))
+      if (any(!is.na(v))) {
+        m <- tapply(v, cell_id, mean, na.rm = TRUE)   # change to sum/median if needed
+        out[as.integer(names(m))] <- as.numeric(m)
+      }
+      r <- tem
+      values(r) <- out
+      names(r) <- nm
       r
-    })
+    }
 
-    # Combine all variables into one multilayer raster
+    layers <- lapply(vars, function(v) make_layer(dsub[[v]], v))
     rstack <- do.call(c, layers)
 
     # Write one GeoTIFF for this year-month
@@ -141,8 +244,6 @@ for (imodel in seq(1,length(models))){
 
     cat(glue("Wrote {outf} with {nlyr(rstack)} variables.\n"))
   }
-
-
 }
 
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/Format.DGVMs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

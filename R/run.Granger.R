@@ -94,25 +94,25 @@ run.Granger <- function(config.file){
                                            ".*.tif$"),
                          full.names = TRUE)
   cc <- rast(cc.files)
-  names(cc) <- gsub("[0-9]","", names(cc))
-  names(cc) <- gsub(tolower(name),"",tolower(names(cc)))
-  names(cc) <- gsub("[._]+$", "",names(cc))
-  cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",3)))
-  cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",4)))
+  cnames <- names(cc)
+
+  cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",3)))
+  cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",4)))
 
   pos <- 3
   while (all(is.na(cc.years))| (max(cc.years) < 20)){
-    cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",pos)))
-    cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(cc.files)),"_|\\."),"[[",pos+1)))
+    cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",pos)))
+    cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",pos+1)))
     pos <- pos + 1
   }
+
+  names(cc) <- rep(y_var,nlyr(cc))
 
   ###################################################################
   # We make sure all grids are aligned
 
   climate.rspld <- terra::resample(climate,rast(raster.grid),method = "bilinear")
   msl.rspld <- terra::resample(msl,rast(raster.grid),method = "bilinear")
-  cc.rspld <- terra::resample(cc,rast(raster.grid),method = "bilinear")
 
   ##################################################################
   # Timer
