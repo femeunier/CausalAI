@@ -72,8 +72,8 @@ run.Granger <- function(config.file){
   msl.rspld <- rast(msl.files)
   cnames <- names(msl.rspld)
 
-  cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",1)))
-  cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",2)))
+  msl.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",1)))
+  msl.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",2)))
 
   names(msl.rspld) <- rep("top.sml",nlyr(msl.rspld))
 
