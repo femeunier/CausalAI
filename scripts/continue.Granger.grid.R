@@ -48,7 +48,6 @@ main.config <- list(lags = 12,
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
-models <- models[c(5)]
 
 raster.grid <- main.config[["raster.grid"]]
 
@@ -126,7 +125,7 @@ for (cmodel in models){
 
   model.config <- main.config
   model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/SML_",cmodel)
-  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/CC_",cmodel)
+  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/gpp.",cmodel)
   model.config[["dest.dir"]] <- file.path(dir.name,cmodel)
   model.config[["name"]] <- cmodel
 

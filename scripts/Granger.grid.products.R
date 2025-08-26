@@ -23,9 +23,6 @@ dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
           "MODIS_GPP")
 
-products <- c("Zhou","Sun","Bi","Madani","Zhang")
-dirs <- c("Zhou","Sun","Bi","Madani","Zhang")
-
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -99,7 +96,7 @@ for (iproduct in seq(1,length(products))){
   product.config <- main.config
   product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/GLEAM_SMs_")
   product.config[["CC.location"]] <- file.path(main.dir,
-                                             dirs[iproduct],paste0("GPP.",cproduct))
+                                             dirs[iproduct],paste0("gpp.",cproduct))
 
   product.config[["dest.dir"]] <- file.path(dir.name,cproduct)
   product.config[["name"]] <- cproduct

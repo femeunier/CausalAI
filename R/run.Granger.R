@@ -93,8 +93,8 @@ run.Granger <- function(config.file){
                                            basename(CC.location),
                                            ".*.tif$"),
                          full.names = TRUE)
-  cc <- rast(cc.files)
-  cnames <- names(cc)
+  cc.rspld <- rast(cc.files)
+  cnames <- names(cc.rspld)
 
   cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",3)))
   cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",4)))
@@ -106,7 +106,7 @@ run.Granger <- function(config.file){
     pos <- pos + 1
   }
 
-  names(cc) <- rep(y_var,nlyr(cc))
+  names(cc.rspld) <- rep(y_var,nlyr(cc.rspld))
 
   ###################################################################
   # We make sure all grids are aligned
