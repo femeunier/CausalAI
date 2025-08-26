@@ -46,6 +46,7 @@ for (imodel in seq(1,length(models))){
   r.model.rspld <- terra::resample(r.model,rast(raster.grid))
   r <- terra::mask(project(r.model.rspld,crs(raster.grid)),
                    land.frac.msk)
+  r <- r[[names(r) == "gpp"]]
 
   cc.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(files)),"\\_"),"[[",3)))
   cc.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(files)),"\\_"),"[[",4)))
@@ -58,6 +59,8 @@ for (imodel in seq(1,length(models))){
   }
 
   dates <- as.Date(paste0(cc.years,"/",cc.months,"/01"))
+
+  names(r) <- paste0(cc.years,"_",sprintf("%02d",cc.months))
 
   yrs <- format(dates, "%Y")
   mons_all <- month(dates)
@@ -79,7 +82,6 @@ for (imodel in seq(1,length(models))){
               file.path(cdir,paste0("gpp.",cmodel,".tif")),
               overwrite = TRUE,
               wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
-
 }
 
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/Format.GPP.models.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

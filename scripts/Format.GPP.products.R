@@ -63,6 +63,7 @@ for (iproduct in seq(1,length(products))){
     pos <- pos + 1
   }
 
+  names(r) <- paste0(cc.years,"_",sprintf("%02d",cc.months))
   dates <- as.Date(paste0(cc.years,"/",cc.months,"/01"))
 
   yrs <- format(dates, "%Y")

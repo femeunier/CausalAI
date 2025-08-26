@@ -96,15 +96,8 @@ run.Granger <- function(config.file){
   cc.rspld <- rast(cc.files)
   cnames <- names(cc.rspld)
 
-  cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",3)))
-  cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",4)))
-
-  pos <- 3
-  while (all(is.na(cc.years))| (max(cc.years) < 20)){
-    cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",pos)))
-    cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",pos+1)))
-    pos <- pos + 1
-  }
+  cc.years <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",1)))
+  cc.months <- as.numeric(unlist(lapply(strsplit((basename(cnames)),"_|\\."),"[[",2)))
 
   names(cc.rspld) <- rep(y_var,nlyr(cc.rspld))
 
