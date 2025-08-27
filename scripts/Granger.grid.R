@@ -11,7 +11,11 @@ library(ggthemes)
 ###############################################################
 # Settings
 
-Nrun.max.per.job <- 300
+Nrun.max.per.job <- 100
+
+models <- c("CABLE-POP","CLASSIC","CLM6.0",
+            "E3SM","JSBACH","JULES","LPJ-GUESS",
+            "LPJmL","LPX-Bern","VISIT")
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -23,7 +27,7 @@ main.config <- list(lags = 12,
                     threshold = 0.1,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
                     raster.grid = raster(extent(-179.75, 179.75,
-                                                -24.75, 24.75),
+                                                -23.25, 23.25),
                                          res = 1,
                                          crs = "+proj=longlat +datum=WGS84"),
                     x_var = c("tmp","tmin","tmax",
@@ -44,10 +48,6 @@ main.config <- list(lags = 12,
                       subsample = c(0.8)),
 
                     time2save = 600)
-
-models <- c("CABLE-POP","CLASSIC","CLM6.0",
-            "E3SM","JSBACH","JULES","LPJ-GUESS",
-            "LPJmL","LPX-Bern","VISIT")
 
 raster.grid <- main.config[["raster.grid"]]
 

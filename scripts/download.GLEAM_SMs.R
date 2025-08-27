@@ -33,4 +33,23 @@ for (cyear in years){
   }
 }
 
+files <- list.files(dest_dir,
+                    pattern = "GLEAM_SMs.*tif$",
+                    full.names = TRUE)
+all.years <- as.numeric(unlist(lapply(
+  strsplit(tools::file_path_sans_ext(basename(files)),"\\_"),
+           "[[",3)))
+all.months <- as.numeric(unlist(lapply(
+  strsplit(tools::file_path_sans_ext(basename(files)),"\\_"),
+           "[[",4)))
+
+r <- terra::rast(files)
+names(r) <- paste0(all.years,"_",all.months)
+
+writeRaster(r,
+            file.path(dest_dir,
+                      paste0("top.sml.gleam.tif")),
+            overwrite = TRUE,
+            wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/download.GLEAM_SMs.R hpc:/data/gent/vo/000/gvo00074/felicien/R

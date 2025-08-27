@@ -11,18 +11,17 @@ library(ggthemes)
 ###############################################################
 # Settings
 
-Nrun.max.per.job <- 300
+Nrun.max.per.job <- 100
 
 products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
               "GOSIF","Zhou","GLASS","Sun","Bi",
               "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-              "MODIS")
+              "MODIS")[15]
 
 dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
-          "MODIS_GPP")
-
+          "MODIS_GPP")[15]
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -34,7 +33,7 @@ main.config <- list(lags = 12,
                     threshold = 0.1,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
                     raster.grid = raster(extent(-179.75, 179.75,
-                                                -24.75, 24.75),
+                                                -23.25, 23.25),
                                          res = 1,
                                          crs = "+proj=longlat +datum=WGS84"),
 
@@ -94,7 +93,7 @@ for (iproduct in seq(1,length(products))){
   dir.create(file.path(dir.name,cproduct),showWarnings = FALSE)
 
   product.config <- main.config
-  product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/GLEAM_SMs_")
+  product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/top.sml.gleam")
   product.config[["CC.location"]] <- file.path(main.dir,
                                              dirs[iproduct],paste0("gpp.",cproduct))
 

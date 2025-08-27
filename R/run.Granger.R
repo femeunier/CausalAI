@@ -189,14 +189,15 @@ run.Granger <- function(config.file){
       dplyr::select(-any_of(c("lon","lat","lon_lat",
                               "year","month")))
 
-    if(all(df[[y_var]] == 0) |
+    if((nrow(df) < 60)){
+      outcome = "Timeseries.too.short"
+      skip <- TRUE
+    } else if(all(df[[y_var]] == 0) |
        all(is.na(df[[y_var]]))){
 
       outcome = "not.run.all.zero"
       skip <- TRUE
-    }
-
-    if(all(abs(df[[y_var]]) < threshold)){
+    } else if(all(abs(df[[y_var]]) < threshold)){
 
       outcome = "not.run.all.small"
       skip <- TRUE
