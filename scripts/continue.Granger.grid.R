@@ -89,43 +89,56 @@ for (cmodel in models){
   files <- list.files(file.path("./outputs/Granger/",cmodel),
                       pattern = "^QoF.*Granger.*.RDS",
                       full.names = TRUE)
-  max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",3)))
-  point <- 3
-  while(all(is.na(max.compt))){
-    max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",point+1)))
-    point <- point + 1
+  if (length(files) >0 ){
+    max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",3)))
+    point <- 3
+    while(all(is.na(max.compt))){
+      max.compt <- as.numeric(unlist(lapply(strsplit(basename(tools::file_path_sans_ext(files)),"\\_"),"[[",point+1)))
+      point <- point + 1
+    }
+    max.compt <- max(max.compt)
+
+    df.runs <- data.frame()
+    for (cfile in files){
+      cdf <- tryCatch(readRDS(cfile) %>%
+                        mutate(model = cmodel),
+                      error = function(e) NULL)
+
+      if (is.null(cdf)) next()
+      if (nrow(cdf) == 0) next()
+
+      df.runs <- bind_rows(df.runs,
+                           cdf)
+    }
+    finished.all.lons.lat <- df.runs %>%
+      filter(!grepl("bug",tolower(outcome))) %>%
+      pull("lon_lat")
+
+    all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
+
+    if (length(all.lons_lats) == 0){
+      next
+    }
+
+    df.lon.lat <- all.df.lon.lat %>%
+      filter(lon_lat %in% all.lons_lats) %>%
+      ungroup() %>%
+      mutate(id = 1:n())
+    Ntot.run <- length(all.lons_lats)
+
+  } else {
+    max.compt <- 0
+    df.lon.lat <- all.df.lon.lat
+    Ntot.run <- length(all.lons_lats)
   }
-  max.compt <- max(max.compt)
 
 
-  df.runs <- data.frame()
-  for (cfile in files){
-    cdf <- tryCatch(readRDS(cfile) %>%
-                      mutate(model = cmodel),
-                    error = function(e) NULL)
-
-    if (is.null(cdf)) next()
-    if (nrow(cdf) == 0) next()
-
-    df.runs <- bind_rows(df.runs,
-                         cdf)
-  }
-  finished.all.lons.lat <- df.runs %>%
-    filter(!grepl("bug",tolower(outcome))) %>%
-    pull("lon_lat")
-
-  all.lons_lats <- all.lons_lats[!(all.lons_lats %in% finished.all.lons.lat)]
-  df.lon.lat <- all.df.lon.lat %>%
-    filter(lon_lat %in% all.lons_lats) %>%
-    ungroup() %>%
-    mutate(id = 1:n())
-  Ntot.run <- length(all.lons_lats)
 
   #######################################################################################################
 
   model.config <- main.config
   model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/top.sml.",cmodel)
-  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/gpp.",cmodel)
+  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/",main.config[["y_var"]],".",cmodel)
   model.config[["dest.dir"]] <- file.path(dir.name,cmodel)
   model.config[["name"]] <- cmodel
 
@@ -147,6 +160,7 @@ for (cmodel in models){
     saveRDS(lons_lats,
             location.file)
 
+    # suffix <- paste0(cmodel,"_",main.config[["y_var"]],"_",compt)
     suffix <- paste0(cmodel,"_",compt)
 
     write.Granger.script(dir.name = file.path(dir.name, cmodel),

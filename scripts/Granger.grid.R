@@ -16,6 +16,7 @@ Nrun.max.per.job <- 100
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
+models <- models[2:10]
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -33,7 +34,7 @@ main.config <- list(lags = 12,
                     x_var = c("tmp","tmin","tmax",
                               "dswrf","vpd","CO2",
                               "pre","top.sml"),
-                    y_var = "gpp",
+                    y_var = "gppanomaly",
 
                     year.min = 1980,
                     year.max = 2050,
@@ -92,7 +93,7 @@ for (cmodel in models){
 
   model.config <- main.config
   model.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/top.sml.",cmodel)
-  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/gpp.",cmodel)
+  model.config[["CC.location"]] <- paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/",cmodel,"/",main.config[["y_var"]],".",cmodel)
   model.config[["dest.dir"]] <- file.path(dir.name,cmodel)
   model.config[["name"]] <- cmodel
 
@@ -114,7 +115,7 @@ for (cmodel in models){
     saveRDS(lons_lats,
             location.file)
 
-    suffix <- paste0(cmodel,"_",compt)
+    suffix <- paste0(cmodel,"_",main.config[["y_var"]],"_",compt)
 
     write.Granger.script(dir.name = file.path(dir.name, cmodel),
                          file.name = paste0("Rscript_",suffix,".R"),

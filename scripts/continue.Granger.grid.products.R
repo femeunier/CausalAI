@@ -11,17 +11,17 @@ library(ggthemes)
 ###############################################################
 # Settings
 
-Nrun.max.per.job <- 300
+Nrun.max.per.job <- 40
 
 products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
               "GOSIF","Zhou","GLASS","Sun","Bi",
               "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-              "MODIS")[15]
+              "MODIS")
 
 dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
-          "MODIS_GPP")[15]
+          "MODIS_GPP")
 
 main.config <- list(lags = 12,
                     initial = 200,
@@ -148,7 +148,7 @@ for (iproduct in seq(1,length(products))){
   product.config <- main.config
   product.config[["SWC.location"]] <- paste0("/data/gent/vo/000/gvo00074/ED_common_data/met/GLEAM/top.sml.gleam")
   product.config[["CC.location"]] <- file.path(main.dir,
-                                               dirs[iproduct],paste0("gpp.",cproduct))
+                                               dirs[iproduct],paste0(main.config[["y_var"]],".",cproduct))
 
   product.config[["dest.dir"]] <- file.path(dir.name,cproduct)
   product.config[["name"]] <- cproduct
@@ -171,6 +171,7 @@ for (iproduct in seq(1,length(products))){
     saveRDS(lons_lats,
             location.file)
 
+    # suffix <- paste0(cproduct,"_",main.config[["y_var"]],"_",compt)
     suffix <- paste0(cproduct,"_",compt)
 
     write.Granger.script(dir.name = file.path(dir.name, cproduct),

@@ -265,7 +265,7 @@ run.Granger <- function(config.file){
     if (!skip){
 
       run <- tryCatch(ml_granger_all_causes(df, dfl,
-                                            target = "gpp", lags = lags,
+                                            target = y_var, lags = lags,
                                             initial = initial, horizon = horizon,
                                             step = step,
                                             bestTune = bestTune),
