@@ -291,7 +291,7 @@ run.Granger <- function(config.file){
 
       # Retrain with full dataset
       dtrain <- xgb.DMatrix(
-        data  = as.matrix(dfl.train[, bestTune0$feature_names, drop = FALSE]),
+        data  = as.matrix(dfl.train[, bestModel0$feature_names, drop = FALSE]),
         label = as.numeric(y.train)
       )
 
@@ -333,14 +333,12 @@ run.Granger <- function(config.file){
         skip <- TRUE
       }
 
-
       run0 <- tryCatch(ml_granger_all_causes0(df, dfl,
                                               target = y_var, lags = lags,
                                               initial = initial, horizon = horizon,
                                               step = step,
                                               bestTune = bestTune0),
                        error = function(e) NULL)
-
 
       if (is.null(run0)){
 
