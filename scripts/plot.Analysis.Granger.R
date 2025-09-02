@@ -6,12 +6,20 @@ library(dplyr)
 library(tidyr)
 library(raster)
 
+
+suffix <- "gppanomaly"
+
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.QoF.Granger.RDS",
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.QoF.Granger",
+                 ifelse(suffix == "",
+                        suffix,
+                        paste0(".",suffix)),".RDS"),
           "./outputs/"))
 
-df.QoF <- readRDS("./outputs/All.QoF.Granger.RDS")
+df.QoF <- readRDS(paste0("./outputs/All.QoF.Granger",ifelse(suffix == "",
+                                                            suffix,
+                                                            paste0(".",suffix)),".RDS"))
 
 models <- sort(unique(df.QoF$model))
 
@@ -92,10 +100,14 @@ ggplot(data = df.QoF) +
 
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.test.Granger.RDS",
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.test.Granger",ifelse(suffix == "",
+                                                                                             suffix,
+                                                                                             paste0(".",suffix)),".RDS"),
           "./outputs/"))
 
-df.test <- readRDS("./outputs/All.test.Granger.RDS")
+df.test <- readRDS(paste0("./outputs/All.test.Granger",ifelse(suffix == "",
+                                                              suffix,
+                                                              paste0(".",suffix)),".RDS"))
 
 ggplot(data = df.test,
        aes(x = pred, y = obs)) +
@@ -112,10 +124,14 @@ ggplot(data = df.test,
 
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.SHAP.Granger.RDS",
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.SHAP.Granger",ifelse(suffix == "",
+                                                                                             suffix,
+                                                                                             paste0(".",suffix)),".RDS"),
           "./outputs/"))
 
-df.SHAP <- readRDS("./outputs/All.SHAP.Granger.RDS")
+df.SHAP <- readRDS(paste0("./outputs/All.SHAP.Granger",ifelse(suffix == "",
+                                                              suffix,
+                                                              paste0(".",suffix)),".RDS"))
 
 df.SHAP.sum <- df.SHAP %>%
   group_by(model,lon_lat, lon,lat,cause,target) %>%
@@ -178,10 +194,14 @@ ggplot(data = df.SHAP.max2) +
 
 system2("rsync",
         c("-avz",
-          "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.results.Granger.RDS",
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.results.Granger",ifelse(suffix == "",
+                                                                                                suffix,
+                                                                                                paste0(".",suffix)),".RDS"),
           "./outputs/"))
 
-All.results.Granger <- readRDS("./outputs/All.results.Granger.RDS")
+All.results.Granger <- readRDS(paste0("./outputs/All.results.Granger",ifelse(suffix == "",
+                                                                             suffix,
+                                                                             paste0(".",suffix)),".RDS"))
 
 ggplot(data = All.results.Granger) +
   geom_raster(aes(x = lon, y = lat,

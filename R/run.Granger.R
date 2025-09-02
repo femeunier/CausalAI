@@ -237,6 +237,15 @@ run.Granger <- function(config.file){
                                           initial = initial, horizon = horizon, skip = skip.num),
                       error = function(e) NULL)
 
+      # fit <- tryCatch(tune_xgb_with_caret_all(train = data.matrix(dfl.train),
+      #                                     y = as.numeric(y.train),
+      #                                     grid = Grid,
+      #                                     target = y_var,
+      #                                     lags = lags,
+      #                                     initial = initial, horizon = horizon, skip = skip.num),
+      #                 error = function(e) NULL)
+
+
       if (!is.null(fit)){
         bestTune <- fit$bestTune
         bestModel <- fit$finalModel
@@ -262,6 +271,33 @@ run.Granger <- function(config.file){
     }
 
 
+    fit0 <- tryCatch(tune_xgb_with_caret_yvaronly(train = data.matrix(dfl.train),
+                                                  y = as.numeric(y.train),
+                                                  grid = Grid,
+                                                  target = y_var,
+                                                  lags = lags,
+                                                  initial = initial, horizon = horizon, skip = skip.num),
+                     error = function(e) NULL)
+
+    if (!is.null(fit0)){
+      bestTune0 <- fit0$bestTune
+      bestModel0 <- fit0$finalModel
+
+      y.pred0 <- predict(bestModel0,
+                         dfl.test[,fit0$finalModel$feature_names])
+      RMSE0 <- caret::RMSE(y.pred0, y.test)
+      RSQ0 <- rsq_vec(as.numeric(y.pred0), as.vector(y.test))
+      rBias0 <- mean(100*(y.test - y.pred0)/y.test,
+                    na.rm = T)
+    } else {
+      RMSE0 <- NA_real_
+      RSQ0 <- NA_real_
+      rBias0 <- NA_real_
+      outcome <- "Bug.when.fitting.0model"
+      skip <- TRUE
+    }
+
+
     if (!skip){
 
       run <- tryCatch(ml_granger_all_causes(df, dfl,
@@ -271,10 +307,24 @@ run.Granger <- function(config.file){
                                             bestTune = bestTune),
                       error = function(e) NULL)
 
-
       if (is.null(run)){
 
         outcome <- "Bug.with.causality"
+        skip <- TRUE
+      }
+
+
+      run0 <- tryCatch(ml_granger_all_causes0(df, dfl,
+                                              target = y_var, lags = lags,
+                                              initial = initial, horizon = horizon,
+                                              step = step,
+                                              bestTune = bestTune0),
+                       error = function(e) NULL)
+
+
+      if (is.null(run0)){
+
+        outcome <- "Bug.with.causality.0model"
         skip <- TRUE
       } else {
 
@@ -287,16 +337,25 @@ run.Granger <- function(config.file){
     df.QoF <- bind_rows(df.QoF,
                         data.frame(lon_lat = clon.lat,
                                    outcome,
+
                                    RMSE,
                                    Rsq = RSQ,
                                    rBias,
+
+                                   RMSE0,
+                                   Rsq0 = RSQ0,
+                                   rBias0,
+
                                    mean.y = mean(df[[y_var]],na.rm = TRUE),
                                    sd.y = sd(df[[y_var]],na.rm = TRUE)))
 
     if (!skip){
       all.test <- bind_rows(all.test,
                             data.frame(pred = y.pred,
+                                       pred0 = y.pred0,
+
                                        obs = y.test,
+
                                        lon_lat = clon.lat))
 
       all.X.test <- bind_rows(all.X.test,
@@ -305,17 +364,30 @@ run.Granger <- function(config.file){
 
       results <- run$results %>%
         as.data.frame()
+      results0 <- run0$results %>%
+        as.data.frame()
 
       all.results <- bind_rows(all.results,
                                results %>%
-                                 mutate(lon_lat = clon.lat))
+                                 mutate(lon_lat = clon.lat,
+                                        type = "full.model"),
+                               results0 %>%
+                                 mutate(lon_lat = clon.lat,
+                                        type = "zero.model"))
 
       shap_df <- run$shap_lags %>%
         as.data.frame()
 
+      shap_df0 <- run0$shap_lags %>%
+        as.data.frame()
+
       all.SHAP <- bind_rows(all.SHAP,
                             shap_df %>%
-                              mutate(lon_lat = clon.lat))
+                              mutate(lon_lat = clon.lat,
+                                     type = "full.model"),
+                            shap_df0 %>%
+                              mutate(lon_lat = clon.lat,
+                                     type = "zero.model"))
 
     }
 

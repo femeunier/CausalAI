@@ -8,10 +8,12 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "LPJmL","LPX-Bern","VISIT")
 # models <- c("CABLE-POP","CLM6.0","JSBACH")
 #
-# models <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
-#             "GOSIF","Zhou","GLASS","Sun","Bi",
-#             "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-#             "MODIS")
+models <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
+            "GOSIF","Zhou","GLASS","Sun","Bi",
+            "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
+            "MODIS")
+
+suffix <- "gppanomaly"
 
 df.QoF <- all.test <- all.SHAP <- all.results <-
   data.frame()
@@ -22,8 +24,15 @@ for (cmodel in models){
 
   # Qof
   files <- list.files(file.path("./outputs/Granger/",cmodel),
-                      pattern = "^QoF.*Granger.*.RDS",
+                      pattern = paste0("^QoF.*Granger.*",
+                                       suffix,".*",
+                                       ".RDS"),
                       full.names = TRUE)
+  L <- sapply(strsplit(basename(files),"_"),length)
+  pos <- max(L) - 1
+  suffixes <- rep("",length(L))
+  suffixes[L > pos] <- sapply(strsplit(basename(files)[L > pos],"_"),"[[",pos)
+  files <- files[suffixes == suffix]
 
   for (cfile in files){
     cQoF <- tryCatch(readRDS(cfile) %>%
@@ -45,6 +54,11 @@ for (cmodel in models){
   files <- list.files(file.path("./outputs/Granger/",cmodel),
                       pattern = "^All.test.XGBoosts.*Granger.*.RDS",
                       full.names = TRUE)
+  L <- sapply(strsplit(basename(files),"_"),length)
+  pos <- max(L) - 1
+  suffixes <- rep("",length(L))
+  suffixes[L > pos] <- sapply(strsplit(basename(files)[L > pos],"_"),"[[",pos)
+  files <- files[suffixes == suffix]
 
   for (cfile in files){
     call.test <- tryCatch(readRDS(cfile) %>%
@@ -66,6 +80,11 @@ for (cmodel in models){
   files <- list.files(file.path("./outputs/Granger/",cmodel),
                       pattern = "^All.SHAP.*Granger.*.RDS",
                       full.names = TRUE)
+  L <- sapply(strsplit(basename(files),"_"),length)
+  pos <- max(L) - 1
+  suffixes <- rep("",length(L))
+  suffixes[L > pos] <- sapply(strsplit(basename(files)[L > pos],"_"),"[[",pos)
+  files <- files[suffixes == suffix]
 
   for (cfile in files){
     cSHAP <- tryCatch(readRDS(cfile) %>%
@@ -88,6 +107,11 @@ for (cmodel in models){
   files <- list.files(file.path("./outputs/Granger/",cmodel),
                       pattern = "^All.results.*Granger.*.RDS",
                       full.names = TRUE)
+  L <- sapply(strsplit(basename(files),"_"),length)
+  pos <- max(L) - 1
+  suffixes <- rep("",length(L))
+  suffixes[L > pos] <- sapply(strsplit(basename(files)[L > pos],"_"),"[[",pos)
+  files <- files[suffixes == suffix]
 
   for (cfile in files){
     cresult <- tryCatch(readRDS(cfile) %>%
@@ -107,13 +131,21 @@ for (cmodel in models){
 }
 
 saveRDS(df.QoF,
-        "./outputs/All.QoF.Granger.RDS")
+        paste0("./outputs/All.QoF.Granger",ifelse(suffix == "",
+                                                  suffix,
+                                                  paste0(".",suffix)),".RDS"))
 saveRDS(all.test,
-        "./outputs/All.test.Granger.RDS")
+        paste0("./outputs/All.test.Granger",ifelse(suffix == "",
+                                                   suffix,
+                                                   paste0(".",suffix)),".RDS"))
 saveRDS(all.SHAP,
-        "./outputs/All.SHAP.Granger.RDS")
+        paste0("./outputs/All.SHAP.Granger",ifelse(suffix == "",
+                                                   suffix,
+                                                   paste0(".",suffix)),".RDS"))
 saveRDS(all.results,
-        "./outputs/All.results.Granger.RDS")
+        paste0("./outputs/All.results.Granger",ifelse(suffix == "",
+                                                      suffix,
+                                                      paste0(".",suffix)),".RDS"))
 
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/Analysis.Granger.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 
