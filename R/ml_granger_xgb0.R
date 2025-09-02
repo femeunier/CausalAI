@@ -9,7 +9,7 @@ ml_granger_xgb0 <- function(dfl, target, cause, lags = 12,
   }
 
   lag_cols <- grep(paste0(target,"_L[0-9]+$"), names(dfl), value = TRUE)
-  X_red  <- X_full[, c(lag_cols), drop = FALSE]
+  X_red  <- dfl[, c(lag_cols), drop = FALSE]
   cause_lag_cols <- paste0(cause, "_L", 1:lags)
   X_full <- dfl[, c(lag_cols,cause_lag_cols), drop = FALSE]
 
