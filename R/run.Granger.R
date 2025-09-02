@@ -277,46 +277,47 @@ run.Granger <- function(config.file){
       skip <- TRUE
     }
 
-    fit0 <- tryCatch(tune_xgb_with_caret_yvaronly(train = data.matrix(dfl.train),
-                                                  y = as.numeric(y.train),
-                                                  grid = Grid,
-                                                  target = y_var,
-                                                  lags = lags,
-                                                  initial = initial, horizon = horizon, skip = skip.num),
-                     error = function(e) NULL)
+    if (!skip){
+      fit0 <- tryCatch(tune_xgb_with_caret_yvaronly(train = data.matrix(dfl.train),
+                                                    y = as.numeric(y.train),
+                                                    grid = Grid,
+                                                    target = y_var,
+                                                    lags = lags,
+                                                    initial = initial, horizon = horizon, skip = skip.num),
+                       error = function(e) NULL)
 
-    if (!is.null(fit0)){
-      bestTune0 <- fit0$bestTune
-      bestModel0 <- fit0$finalModel
+      if (!is.null(fit0)){
+        bestTune0 <- fit0$bestTune
+        bestModel0 <- fit0$finalModel
 
-      # Retrain with full dataset
-      dtrain <- xgb.DMatrix(
-        data  = as.matrix(dfl.train[, bestModel0$feature_names, drop = FALSE]),
-        label = as.numeric(y.train)
-      )
+        # Retrain with full dataset
+        dtrain <- xgb.DMatrix(
+          data  = as.matrix(dfl.train[, bestModel0$feature_names, drop = FALSE]),
+          label = as.numeric(y.train)
+        )
 
-      params <- list(
-        objective = "reg:squarederror",
-        eta = bestTune0$eta, max_depth = bestTune0$max_depth, gamma = bestTune0$gamma,
-        colsample_bytree = bestTune0$colsample_bytree, min_child_weight = bestTune0$min_child_weight,
-        subsample = bestTune0$subsample
-      )
-      final_model0 <- xgb.train(params, dtrain, nrounds = bestTune0$nrounds, verbose = 0)
+        params <- list(
+          objective = "reg:squarederror",
+          eta = bestTune0$eta, max_depth = bestTune0$max_depth, gamma = bestTune0$gamma,
+          colsample_bytree = bestTune0$colsample_bytree, min_child_weight = bestTune0$min_child_weight,
+          subsample = bestTune0$subsample
+        )
+        final_model0 <- xgb.train(params, dtrain, nrounds = bestTune0$nrounds, verbose = 0)
 
-      y.pred0 <- predict(final_model0,
-                         dfl.test[,fit0$finalModel$feature_names])
-      RMSE0 <- caret::RMSE(y.pred0, y.test)
-      RSQ0 <- rsq_vec(as.numeric(y.pred0), as.vector(y.test))
-      rBias0 <- mean(100*(y.test - y.pred0)/y.test,
-                    na.rm = T)
-    } else {
-      RMSE0 <- NA_real_
-      RSQ0 <- NA_real_
-      rBias0 <- NA_real_
-      outcome <- "Bug.when.fitting.0model"
-      skip <- TRUE
+        y.pred0 <- predict(final_model0,
+                           dfl.test[,fit0$finalModel$feature_names])
+        RMSE0 <- caret::RMSE(y.pred0, y.test)
+        RSQ0 <- rsq_vec(as.numeric(y.pred0), as.vector(y.test))
+        rBias0 <- mean(100*(y.test - y.pred0)/y.test,
+                       na.rm = T)
+      } else {
+        RMSE0 <- NA_real_
+        RSQ0 <- NA_real_
+        rBias0 <- NA_real_
+        outcome <- "Bug.when.fitting.0model"
+        skip <- TRUE
+      }
     }
-
 
     if (!skip){
 
@@ -331,23 +332,23 @@ run.Granger <- function(config.file){
 
         outcome <- "Bug.with.causality"
         skip <- TRUE
-      }
+      } else{
+        run0 <- tryCatch(ml_granger_all_causes0(df, dfl,
+                                                target = y_var, lags = lags,
+                                                initial = initial, horizon = horizon,
+                                                step = step,
+                                                bestTune = bestTune0),
+                         error = function(e) NULL)
 
-      run0 <- tryCatch(ml_granger_all_causes0(df, dfl,
-                                              target = y_var, lags = lags,
-                                              initial = initial, horizon = horizon,
-                                              step = step,
-                                              bestTune = bestTune0),
-                       error = function(e) NULL)
+        if (is.null(run0)){
 
-      if (is.null(run0)){
+          outcome <- "Bug.with.causality.0model"
+          skip <- TRUE
+        } else {
 
-        outcome <- "Bug.with.causality.0model"
-        skip <- TRUE
-      } else {
+          outcome <- "fine"
 
-        outcome <- "fine"
-
+        }
       }
     }
 
