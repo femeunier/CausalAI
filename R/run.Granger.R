@@ -51,17 +51,23 @@ run.Granger <- function(config.file){
     xout = monthly_df$year_decimal)$y
 
 
-  climate.files <- list.files(path = dirname(climate.location),
-                              pattern = paste0("^",
-                                               basename(climate.location),
-                                               ".*.tif$"),
-                              full.names = TRUE)
-  climate <- rast(climate.files)
-  names(climate) <- gsub("[0-9]","", names(climate))
-  names(climate) <- gsub(tolower(name),"",tolower(names(climate)))
-  names(climate) <- gsub("[._]+$", "",names(climate))
-  climate.years <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"_|\\."),"[[",2)))
-  climate.months <- as.numeric(unlist(lapply(strsplit(tools::file_path_sans_ext(basename(climate.files)),"_|\\."),"[[",3)))
+  climate.list <- list()
+  for (cvar in x_var){
+    climate.files <- list.files(path = dirname(climate.location),
+                                pattern = paste0("^",
+                                                 basename(climate.location),cvar,
+                                                 ".*.tif$"),
+                                full.names = TRUE,
+                                ignore.case = TRUE)
+    if (length(climate.files) == 0) next()
+    cclimate <- rast(climate.files)
+    climate.list[[cvar]] <-  cclimate
+  }
+
+  climate <- rast(climate.list)
+  names(climate) <- tolower(sapply(strsplit(names(climate),"\\_"),"[[",1))
+  climate.years <- as.numeric(unlist(lapply(strsplit(names(cclimate),"_|\\."),"[[",1)))
+  climate.months <- as.numeric(unlist(lapply(strsplit(names(cclimate),"_|\\."),"[[",2)))
 
 
   msl.files <- list.files(path = dirname(SWC.location),
@@ -90,10 +96,6 @@ run.Granger <- function(config.file){
 
   names(cc.rspld) <- rep(y_var,nlyr(cc.rspld))
 
-  ###################################################################
-  # We make sure all grids are aligned
-
-  climate.rspld <- terra::resample(climate,rast(raster.grid),method = "bilinear")
 
   ##################################################################
   # Timer
@@ -125,7 +127,7 @@ run.Granger <- function(config.file){
     print(paste0(ilon.lat/length(lons_lats),"-",clon,"/",clat))
 
     # We exctract
-    temp.climate <- terra::extract(climate.rspld,
+    temp.climate <- terra::extract(climate,
                                   terra::vect(data.frame(lon = clon,
                                                         lat = clat),
                                               geom = c("lon", "lat")))
@@ -256,7 +258,7 @@ run.Granger <- function(config.file){
         final_model <- xgb.train(params, dtrain, nrounds = bestTune$nrounds, verbose = 0)
 
         y.pred <- predict(final_model,
-                          dfl.test[,final_model$feature_names])
+                          dfl.test[,bestModel$feature_names])
         RMSE <- caret::RMSE(y.pred, y.test)
         RSQ <- rsq_vec(as.numeric(y.pred), as.vector(y.test))
         rBias <- mean(100*(y.test - y.pred)/y.test,

@@ -4,6 +4,7 @@ library(dplyr)
 library(raster)
 library(terra)
 library(lubridate)
+library(CausalAI)
 
 
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
@@ -24,6 +25,7 @@ main.dir <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/DGVM/"
 
 e <- extent(-180,180,-25,25)
 years.ref <- 1981:2010
+years.ref <- 1900:2100
 
 for (imodel in seq(1,length(models))){
 
@@ -59,11 +61,40 @@ for (imodel in seq(1,length(models))){
   }
 
   dates <- as.Date(paste0(cc.years,"/",cc.months,"/01"))
-
   names(r) <- paste0(cc.years,"_",sprintf("%02d",cc.months))
+
+  t_num <- lubridate::decimal_date(dates)
+  r_detr <- terra::app(r, fun = function(v) detrend_vec(v, t_num))
+  names(r_detr) <- names(r)
+
+  yrs <- format(dates, "%Y")
+  mons_all <- month(dates)
+  ref.pos <- yrs %in% years.ref
+  ref <- r_detr[[ref.pos]]
+
+  mons <- mons_all[ref.pos]
+  clim <- tapp(ref, mons, mean, na.rm = TRUE)
+
+  clim_all <- clim[[mons_all]]
+  anoms <- r_detr - clim_all
 
   writeRaster(r,
               file.path(cdir,paste0("top.sml.",cmodel,".tif")),
+              overwrite = TRUE,
+              wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
+  writeRaster(r - anoms,
+              file.path(cdir,paste0("top.smltrends.",cmodel,".tif")),
+              overwrite = TRUE,
+              wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
+  writeRaster(r_detr,
+              file.path(cdir,paste0("top.smldetrended.",cmodel,".tif")),
+              overwrite = TRUE,
+              wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
+  writeRaster(anoms,
+              file.path(cdir,paste0("top.smlanomaly.",cmodel,".tif")),
               overwrite = TRUE,
               wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
 }
