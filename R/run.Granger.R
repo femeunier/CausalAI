@@ -205,15 +205,15 @@ run.Granger <- function(config.file){
 
     if (!skip){
 
-      mu <- sapply(df, mean) ; mu[y_var] <- 0
-      sdv <- sapply(df, sd) ; sdv[y_var] <- 1
+      smp_size <- floor(0.8 * nrow(df))
+      train_ind <- 1:smp_size
+
+      mu  <- sapply(df[train_ind, , drop = FALSE], mean); mu[y_var]  <- 0
+      sdv <- sapply(df[train_ind, , drop = FALSE], sd);   sdv[y_var] <- 1
 
       df <- scale_z(df, mu, sdv)
       dfl <- make_lags(df, max_lag = lags) %>%
         na.omit()
-
-      smp_size <- floor(0.8 * nrow(dfl))
-      train_ind <- 1:smp_size
 
       df.train <- df[train_ind,c(x_var,y_var)]
       dfl.train <- as.matrix(dfl[train_ind,
@@ -237,21 +237,26 @@ run.Granger <- function(config.file){
                                           initial = initial, horizon = horizon, skip = skip.num),
                       error = function(e) NULL)
 
-      # fit <- tryCatch(tune_xgb_with_caret_all(train = data.matrix(dfl.train),
-      #                                     y = as.numeric(y.train),
-      #                                     grid = Grid,
-      #                                     target = y_var,
-      #                                     lags = lags,
-      #                                     initial = initial, horizon = horizon, skip = skip.num),
-      #                 error = function(e) NULL)
-
-
       if (!is.null(fit)){
         bestTune <- fit$bestTune
         bestModel <- fit$finalModel
 
-        y.pred <- predict(bestModel,
-                          dfl.test[,fit$finalModel$feature_names])
+        # Retrain with full dataset
+        dtrain <- xgb.DMatrix(
+          data  = as.matrix(dfl.train[, bestModel$feature_names, drop = FALSE]),
+          label = as.numeric(y.train)
+        )
+
+        params <- list(
+          objective = "reg:squarederror",
+          eta = bestTune$eta, max_depth = bestTune$max_depth, gamma = bestTune$gamma,
+          colsample_bytree = bestTune$colsample_bytree, min_child_weight = bestTune$min_child_weight,
+          subsample = bestTune$subsample
+        )
+        final_model <- xgb.train(params, dtrain, nrounds = bestTune$nrounds, verbose = 0)
+
+        y.pred <- predict(final_model,
+                          dfl.test[,final_model$feature_names])
         RMSE <- caret::RMSE(y.pred, y.test)
         RSQ <- rsq_vec(as.numeric(y.pred), as.vector(y.test))
         rBias <- mean(100*(y.test - y.pred)/y.test,
@@ -270,7 +275,6 @@ run.Granger <- function(config.file){
       skip <- TRUE
     }
 
-
     fit0 <- tryCatch(tune_xgb_with_caret_yvaronly(train = data.matrix(dfl.train),
                                                   y = as.numeric(y.train),
                                                   grid = Grid,
@@ -283,7 +287,21 @@ run.Granger <- function(config.file){
       bestTune0 <- fit0$bestTune
       bestModel0 <- fit0$finalModel
 
-      y.pred0 <- predict(bestModel0,
+      # Retrain with full dataset
+      dtrain <- xgb.DMatrix(
+        data  = as.matrix(dfl.train[, bestTune0$feature_names, drop = FALSE]),
+        label = as.numeric(y.train)
+      )
+
+      params <- list(
+        objective = "reg:squarederror",
+        eta = bestTune0$eta, max_depth = bestTune0$max_depth, gamma = bestTune0$gamma,
+        colsample_bytree = bestTune0$colsample_bytree, min_child_weight = bestTune0$min_child_weight,
+        subsample = bestTune0$subsample
+      )
+      final_model0 <- xgb.train(params, dtrain, nrounds = bestTune0$nrounds, verbose = 0)
+
+      y.pred0 <- predict(final_model0,
                          dfl.test[,fit0$finalModel$feature_names])
       RMSE0 <- caret::RMSE(y.pred0, y.test)
       RSQ0 <- rsq_vec(as.numeric(y.pred0), as.vector(y.test))

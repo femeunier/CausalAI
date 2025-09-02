@@ -59,29 +59,41 @@ for (imodel in seq(1,length(models))){
   }
 
   dates <- as.Date(paste0(cc.years,"/",cc.months,"/01"))
-
   names(r) <- paste0(cc.years,"_",sprintf("%02d",cc.months))
+
+  t_num <- lubridate::decimal_date(dates)
+  r_detr <- terra::app(r, fun = function(v) detrend_vec(v, t_num))
+  names(r_detr) <- names(r)
+
 
   yrs <- format(dates, "%Y")
   mons_all <- month(dates)
   ref.pos <- yrs %in% years.ref
-  ref <- r[[ref.pos]]
+  ref <- r_detr[[ref.pos]]
 
   mons <- mons_all[ref.pos]
   clim <- tapp(ref, mons, mean, na.rm = TRUE)
 
   clim_all <- clim[[mons_all]]
-  anoms <- r - clim_all
+  anoms <- r_detr - clim_all
+
+  writeRaster(r,
+              file.path(cdir,paste0("gpp.",cmodel,".tif")),
+              overwrite = TRUE,
+              wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
+  writeRaster(r_detr,
+              file.path(cdir,paste0("gppdetrended.",cmodel,".tif")),
+              overwrite = TRUE,
+              wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
 
   writeRaster(anoms,
               file.path(cdir,paste0("gppanomaly.",cmodel,".tif")),
               overwrite = TRUE,
               wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
 
-  writeRaster(r,
-              file.path(cdir,paste0("gpp.",cmodel,".tif")),
-              overwrite = TRUE,
-              wopt = list(gdal = "COMPRESS=LZW", datatype = "FLT4S"))
+
 }
 
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/Format.GPP.models.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
