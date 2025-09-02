@@ -267,6 +267,10 @@ run.Granger <- function(config.file){
         RMSE <- NA_real_
         RSQ <- NA_real_
         rBias <- NA_real_
+        RMSE0 <- NA_real_
+        RSQ0 <- NA_real_
+        rBias0 <- NA_real_
+
         outcome <- "Bug.when.fitting"
         skip <- TRUE
       }
@@ -274,6 +278,9 @@ run.Granger <- function(config.file){
       RMSE <- NA_real_
       RSQ <- NA_real_
       rBias <- NA_real_
+      RMSE0 <- NA_real_
+      RSQ0 <- NA_real_
+      rBias0 <- NA_real_
       skip <- TRUE
     }
 
