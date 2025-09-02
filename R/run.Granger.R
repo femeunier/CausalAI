@@ -373,6 +373,7 @@ run.Granger <- function(config.file){
                                    rBias0,
 
                                    mean.y = mean(df[[y_var]],na.rm = TRUE),
+                                   mean.abs.y = mean(abs(df[[y_var]]),na.rm = TRUE),
                                    sd.y = sd(df[[y_var]],na.rm = TRUE)))
 
     if (!skip){
