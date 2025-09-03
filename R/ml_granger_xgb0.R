@@ -1,4 +1,4 @@
-ml_granger_xgb0 <- function(dfl, train_id, target, cause, lags = 12,
+ml_granger_xgb0 <- function(dfl, mod_red, target, cause, lags = 12,
                            initial = 200, horizon = 12, step = 6,
                            bestTune, verbose = 0) {
   y <- dfl[[target]]
@@ -32,8 +32,8 @@ ml_granger_xgb0 <- function(dfl, train_id, target, cause, lags = 12,
 
   dtrain_full <- xgboost::xgb.DMatrix(as.matrix(X_full[train_id, feats_full, drop = FALSE]),
                                       label = as.numeric(y[train_id]))
-  dtrain_red  <- xgboost::xgb.DMatrix(as.matrix(X_red [train_id, feats_red , drop = FALSE]),
-                                      label = as.numeric(y[train_id]))
+  # dtrain_red  <- xgboost::xgb.DMatrix(as.matrix(X_red [train_id, feats_red , drop = FALSE]),
+  #                                     label = as.numeric(y[train_id]))
 
   params <- list(
     objective = "reg:squarederror",
@@ -48,7 +48,7 @@ ml_granger_xgb0 <- function(dfl, train_id, target, cause, lags = 12,
   nrounds <- bestTune$nrounds
 
   mod_full <- xgboost::xgb.train(params, dtrain_full, nrounds = nrounds, verbose = verbose)
-  mod_red  <- xgboost::xgb.train(params, dtrain_red , nrounds = nrounds, verbose = verbose)
+  # mod_red  <- xgboost::xgb.train(params, dtrain_red , nrounds = nrounds, verbose = verbose)
 
   # --- TEST-ONLY predictions (align to what you trained for) -------------
   # Here we produce standard 1-step-ahead style predictions at the test timestamps.

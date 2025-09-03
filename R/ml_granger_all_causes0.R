@@ -1,10 +1,10 @@
-ml_granger_all_causes0 <- function(df, dfl, train_id, target, lags = 6,
+ml_granger_all_causes0 <- function(df, dfl, mod_red, train_id, target, lags = 6,
                                   initial = 200, horizon = 12, step = 6,
                                   bestTune, verbose = 0) {
   causes <- setdiff(colnames(df), target)
   res_list <- lapply(causes, function(cause) {
     print(cause)
-    r <- ml_granger_xgb0(dfl, train_id, target, cause, lags, initial, horizon, step, bestTune, verbose)
+    r <- ml_granger_xgb0(dfl, mod_red, target, cause, lags, initial, horizon, step, bestTune, verbose)
     list(cause = cause, r = r)
   })
 

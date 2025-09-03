@@ -342,7 +342,7 @@ run.Granger <- function(config.file){
         outcome <- "Bug.with.causality"
         skip <- TRUE
       } else{
-        run0 <- tryCatch(ml_granger_all_causes0(df, dfl, train_ind,
+        run0 <- tryCatch(ml_granger_all_causes0(df, dfl, final_model0,
                                                 target = y_var, lags = lags,
                                                 initial = initial, horizon = horizon,
                                                 step = step,
