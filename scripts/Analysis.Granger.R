@@ -6,12 +6,11 @@ library(tidyr)
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
-# models <- c("CABLE-POP","CLM6.0","JSBACH")
-#
-models <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
-            "GOSIF","Zhou","GLASS","Sun","Bi",
-            "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-            "MODIS")
+
+# models <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
+#             "GOSIF","Zhou","GLASS","Sun","Bi",
+#             "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
+#             "MODIS")
 
 suffix <- "gppanomaly"
 
@@ -28,6 +27,9 @@ for (cmodel in models){
                                        suffix,".*",
                                        ".RDS"),
                       full.names = TRUE)
+
+  if (length(files) == 0) next()
+
   L <- sapply(strsplit(basename(files),"_"),length)
   pos <- max(L) - 1
   suffixes <- rep("",length(L))

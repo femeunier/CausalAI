@@ -171,8 +171,7 @@ for (iproduct in seq(1,length(products))){
     saveRDS(lons_lats,
             location.file)
 
-    # suffix <- paste0(cproduct,"_",main.config[["y_var"]],"_",compt)
-    suffix <- paste0(cproduct,"_",compt)
+    suffix <- paste0(cproduct,"_",main.config[["y_var"]],"_",compt)
 
     write.Granger.script(dir.name = file.path(dir.name, cproduct),
                          file.name = paste0("Rscript_",suffix,".R"),

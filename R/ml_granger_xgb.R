@@ -57,7 +57,6 @@ ml_granger_xgb <- function(dfl,
     subsample = bestTune$subsample,
     nthread = Ncores,
     tree_method = "hist",
-    deterministic_histogram = TRUE,
     predictor = "cpu_predictor"
   )
   nrounds <- bestTune$nrounds

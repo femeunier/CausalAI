@@ -1,4 +1,4 @@
-ml_granger_xgb0 <- function(dfl, mod_red, target, cause, lags = 12,
+ml_granger_xgb0 <- function(dfl, mod_red, train_id, target, cause, lags = 12,
                            initial = 200, horizon = 12, step = 6,
                            bestTune, verbose = 0) {
   y <- dfl[[target]]
@@ -43,7 +43,9 @@ ml_granger_xgb0 <- function(dfl, mod_red, target, cause, lags = 12,
     colsample_bytree = bestTune$colsample_bytree,
     min_child_weight = bestTune$min_child_weight,
     subsample = bestTune$subsample,
-    nthread = Ncores
+    nthread = Ncores,
+    tree_method = "hist",
+    predictor = "cpu_predictor"
   )
   nrounds <- bestTune$nrounds
 
@@ -109,3 +111,6 @@ ml_granger_xgb0 <- function(dfl, mod_red, target, cause, lags = 12,
     n_oos         = length(y_oos)
   )
 }
+
+# scp /home/femeunier/Documents/projects/CausalAI/R/ml_granger_xgb0.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+

@@ -160,8 +160,7 @@ for (cmodel in models){
     saveRDS(lons_lats,
             location.file)
 
-    # suffix <- paste0(cmodel,"_",main.config[["y_var"]],"_",compt)
-    suffix <- paste0(cmodel,"_",compt)
+    suffix <- paste0(cmodel,"_",main.config[["y_var"]],"_",compt)
 
     write.Granger.script(dir.name = file.path(dir.name, cmodel),
                          file.name = paste0("Rscript_",suffix,".R"),

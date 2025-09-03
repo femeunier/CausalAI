@@ -11,15 +11,11 @@ suffix <- "gppanomaly"
 
 system2("rsync",
         c("-avz",
-          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.QoF.Granger",
-                 ifelse(suffix == "",
-                        suffix,
-                        paste0(".",suffix)),".RDS"),
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.QoF.Granger.",
+                 suffix,".RDS"),
           "./outputs/"))
 
-df.QoF <- readRDS(paste0("./outputs/All.QoF.Granger",ifelse(suffix == "",
-                                                            suffix,
-                                                            paste0(".",suffix)),".RDS"))
+df.QoF <- readRDS(paste0("./outputs/All.QoF.Granger.",suffix,".RDS"))
 
 models <- sort(unique(df.QoF$model))
 
@@ -36,7 +32,7 @@ world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
 ggplot(data = df.QoF) +
   geom_raster(aes(x = lon, y = lat,
-                  fill = mean.y)) +
+                  fill = mean.abs.y)) +
   geom_sf(data = world,fill = NA, color = "grey17") +
   scale_y_continuous(limits = c(-1,1)*23.5) +
   scale_x_continuous(limits = c(-120,160)) +

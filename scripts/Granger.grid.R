@@ -18,14 +18,14 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "LPJmL","LPX-Bern","VISIT")
 models <- models[1]
 
-main.config <- list(lags = 12,
-                    initial = 200,
-                    horizon = 12,
+main.config <- list(lags = 6,
+                    initial = 240,
+                    horizon = 3,
                     global.suffix = "DGVM",
                     step = 12,
                     skip = 11,
                     fac.CC = 86400*365,
-                    threshold = 0.1,
+                    threshold = 0.02,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/anomaly.",
                     raster.grid = raster(extent(-179.75, 179.75,
                                                 -23.25, 23.25),
@@ -36,17 +36,8 @@ main.config <- list(lags = 12,
                               "pre","top.sml"),
                     y_var = "gppanomaly",
 
-                    year.min = 1980,
-                    year.max = 2050,
-
-                    # Grid = expand.grid(
-                    #   nrounds = c(200, 600, 1200),
-                    #   max_depth = c(3, 6, 12),
-                    #   eta = c(0.03, 0.1),
-                    #   gamma = c(0),
-                    #   colsample_bytree = c(0.8),
-                    #   min_child_weight = c(1),
-                    #   subsample = c(0.8)),
+                    year.min = 1900,
+                    year.max = 2100,
 
                     Grid = tidyr::crossing(
                       eta_nrounds <- data.frame(

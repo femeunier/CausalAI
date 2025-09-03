@@ -1,4 +1,4 @@
-ml_granger_all_causes <- function(df, dfl, mod_full, train_id,target, lags = 6,
+ml_granger_all_causes <- function(df, dfl, mod_full, train_id, target, lags = 6,
                                   initial = 200, horizon = 12, step = 6,
                                   bestTune, verbose = 0) {
   causes <- setdiff(colnames(df), target)
