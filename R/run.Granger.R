@@ -328,7 +328,7 @@ run.Granger <- function(config.file){
 
     if (!skip){
 
-      run <- tryCatch(ml_granger_all_causes(df, dfl,
+      run <- tryCatch(ml_granger_all_causes(df, dfl, train_ind,
                                             target = y_var, lags = lags,
                                             initial = initial, horizon = horizon,
                                             step = step,
@@ -340,7 +340,7 @@ run.Granger <- function(config.file){
         outcome <- "Bug.with.causality"
         skip <- TRUE
       } else{
-        run0 <- tryCatch(ml_granger_all_causes0(df, dfl,
+        run0 <- tryCatch(ml_granger_all_causes0(df, dfl, train_ind,
                                                 target = y_var, lags = lags,
                                                 initial = initial, horizon = horizon,
                                                 step = step,
