@@ -10,9 +10,11 @@ ml_granger_all_causes0 <- function(df, dfl, train_id, target, lags = 6,
 
   results <- purrr::map_dfr(res_list, function(z) {
     tibble(cause = z$cause, target = target,
-           improvement = z$r$improvement, p_value = z$r$p_value,
+           improvement = z$r$improvement, p_value = z$r$cw_p_value,
            rmse_full = z$r$rmse_full, rmse_reduced = z$r$rmse_reduced,
-           dm_stat = z$r$dm_stat)
+           cw_stat = z$r$cw_stat,
+           n_oos = z$r$n_oos)
+
   })
   shap_lags <- purrr::map_dfr(res_list, function(z) {
     if (is.null(z$r$shap_lag_summary)) return(NULL)

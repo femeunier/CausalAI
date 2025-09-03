@@ -1,6 +1,14 @@
-ml_granger_xgb <- function(dfl, train_id, target, cause, lags = 12,
-                           initial = 200, horizon = 12, step = 6,
-                           bestTune, verbose = 0) {
+ml_granger_xgb <- function(dfl,
+                           mod_full,
+                           train_id,
+                           target,
+                           cause,
+                           lags = 12,
+                           initial = 200,
+                           horizon = 12,
+                           step = 6,
+                           bestTune,
+                           verbose = 0) {
   y <- dfl[[target]]
 
   if (requireNamespace("future", quietly = TRUE)) {
@@ -19,21 +27,25 @@ ml_granger_xgb <- function(dfl, train_id, target, cause, lags = 12,
   test_id  <- setdiff(seq_len(n), train_id)
   if (length(test_id) < 5L) {
     future::plan("sequential")
-    return(list(
-      improvement = NA_real_, cw_p_value = NA_real_, cw_stat = NA_real_,
-      rmse_full = NA_real_, rmse_reduced = NA_real_,
-      shap_lag_summary = NULL, n_oos = 0L
-    ))
+    return(
+      list(
+        improvement = NA_real_,
+        cw_p_value = NA_real_,
+        cw_stat = NA_real_,
+        rmse_full = NA_real_,
+        rmse_reduced = NA_real_,
+        shap_lag_summary = NULL,
+        n_oos = 0L
+      )
+    )
   }
 
   # --- Fit once on TRAIN ONLY (full vs reduced) --------------------------
   feats_full <- colnames(X_full)
   feats_red  <- colnames(X_red)
 
-  dtrain_full <- xgboost::xgb.DMatrix(as.matrix(X_full[train_id, feats_full, drop = FALSE]),
-                                      label = as.numeric(y[train_id]))
-  dtrain_red  <- xgboost::xgb.DMatrix(as.matrix(X_red [train_id, feats_red , drop = FALSE]),
-                                      label = as.numeric(y[train_id]))
+  # dtrain_full <- xgboost::xgb.DMatrix(as.matrix(X_full[train_id, feats_full, drop = FALSE]), label = as.numeric(y[train_id]))
+  dtrain_red  <- xgboost::xgb.DMatrix(as.matrix(X_red [train_id, feats_red , drop = FALSE]), label = as.numeric(y[train_id]))
 
   params <- list(
     objective = "reg:squarederror",
@@ -43,11 +55,14 @@ ml_granger_xgb <- function(dfl, train_id, target, cause, lags = 12,
     colsample_bytree = bestTune$colsample_bytree,
     min_child_weight = bestTune$min_child_weight,
     subsample = bestTune$subsample,
-    nthread = Ncores
+    nthread = Ncores,
+    tree_method = "hist",
+    deterministic_histogram = TRUE,
+    predictor = "cpu_predictor"
   )
   nrounds <- bestTune$nrounds
 
-  mod_full <- xgboost::xgb.train(params, dtrain_full, nrounds = nrounds, verbose = verbose)
+  # mod_full <- xgboost::xgb.train(params, dtrain_full, nrounds = nrounds, verbose = verbose)
   mod_red  <- xgboost::xgb.train(params, dtrain_red , nrounds = nrounds, verbose = verbose)
 
   # --- TEST-ONLY predictions (align to what you trained for) -------------
@@ -58,7 +73,7 @@ ml_granger_xgb <- function(dfl, train_id, target, cause, lags = 12,
   Xte_red  <- as.matrix(X_red [test_id, feats_red , drop = FALSE])
 
   f1 <- as.numeric(predict(mod_full, Xte_full))
-  f0 <- as.numeric(predict(mod_red , Xte_red ))
+  f0 <- as.numeric(predict(mod_red , Xte_red))
   y_oos <- as.numeric(y[test_id])
 
   # --- Metrics + Clark–West on test only --------------------------------
@@ -68,7 +83,13 @@ ml_granger_xgb <- function(dfl, train_id, target, cause, lags = 12,
 
   # Use h = 1 for these sequential test predictions;
   # set h = horizon *only* if target already encodes y_{t+h}.
-  cw <- clark_west_test(y = y_oos, f0 = f0, f1 = f1, h = 1, alternative = "greater")
+  cw <- clark_west_test(
+    y = y_oos,
+    f0 = f0,
+    f1 = f1,
+    h = 1,
+    alternative = "greater"
+  )
 
   # --- SHAP on TEST ONLY (no leakage) -----------------------------------
   shap_summary <- NULL
@@ -102,10 +123,13 @@ ml_granger_xgb <- function(dfl, train_id, target, cause, lags = 12,
     improvement   = improvement,
     cw_p_value    = cw$p.value,
     cw_stat       = cw$statistic,
-    cw_delta      = cw$mean_d,     # avg adjusted MSPE diff (>0 favors full)
+    cw_delta      = cw$mean_d,
+    # avg adjusted MSPE diff (>0 favors full)
     rmse_full     = rmse_full,
     rmse_reduced  = rmse_red,
     shap_lag_summary = shap_summary,
     n_oos         = length(y_oos)
   )
 }
+
+# scp /home/femeunier/Documents/projects/CausalAI/R/ml_granger_xgb.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

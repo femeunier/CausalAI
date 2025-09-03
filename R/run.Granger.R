@@ -1,5 +1,7 @@
 run.Granger <- function(config.file){
 
+  set.seed(1234)
+
   config <- readRDS(config.file)
 
   global.suffix <- config[["global.suffix"]]
@@ -328,7 +330,7 @@ run.Granger <- function(config.file){
 
     if (!skip){
 
-      run <- tryCatch(ml_granger_all_causes(df, dfl, train_ind,
+      run <- tryCatch(ml_granger_all_causes(df, dfl, final_model, train_ind,
                                             target = y_var, lags = lags,
                                             initial = initial, horizon = horizon,
                                             step = step,

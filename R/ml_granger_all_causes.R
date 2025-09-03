@@ -1,18 +1,20 @@
-ml_granger_all_causes <- function(df, dfl, train_id,target, lags = 6,
+ml_granger_all_causes <- function(df, dfl, mod_full, train_id,target, lags = 6,
                                   initial = 200, horizon = 12, step = 6,
                                   bestTune, verbose = 0) {
   causes <- setdiff(colnames(df), target)
   res_list <- lapply(causes, function(cause) {
     print(cause)
-    r <- ml_granger_xgb(dfl, train_id, target, cause, lags, initial, horizon, step, bestTune, verbose)
+    r <- ml_granger_xgb(dfl, mod_full, train_id, target, cause, lags, initial, horizon, step, bestTune, verbose)
     list(cause = cause, r = r)
   })
 
   results <- purrr::map_dfr(res_list, function(z) {
     tibble(cause = z$cause, target = target,
-           improvement = z$r$improvement, p_value = z$r$p_value,
+           improvement = z$r$improvement, p_value = z$r$cw_p_value,
            rmse_full = z$r$rmse_full, rmse_reduced = z$r$rmse_reduced,
-           dm_stat = z$r$dm_stat)
+           cw_stat = z$r$cw_stat,
+           n_oos = z$r$n_oos)
+
   })
   shap_lags <- purrr::map_dfr(res_list, function(z) {
     if (is.null(z$r$shap_lag_summary)) return(NULL)
