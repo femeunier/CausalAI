@@ -50,7 +50,7 @@ run.Granger <- function(config.file){
   f <- splinefun(CO2$year, CO2$CO2, method = "natural")
   monthly_df$CO2 <- f(monthly_df$year_decimal)
 
-  monthly_df <- deseason_detrend(monthly_df, year.min = year.min, year.max = year.max) %>%
+  monthly_df <- deseason_detrend(monthly_df, year.min = 1960, year.max = 1990) %>%
     dplyr::select(year,month,CO2,co2detrended,co2anomaly)
 
   climate.list <- list()
