@@ -16,27 +16,26 @@ Nrun.max.per.job <- 100
 products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
               "GOSIF","Zhou","GLASS","Sun","Bi",
               "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-              "MODIS")
+              "MODIS")[15]
 
 dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
-          "MODIS_GPP")
+          "MODIS_GPP")[15]
 
-main.config <- list(lags = 12,
-                    initial = 200,
-                    horizon = 12,
+main.config <- list(lags = 6,
+                    initial = 180,
+                    horizon = 3,
                     global.suffix = "Product",
                     step = 12,
                     skip = 11,
                     fac.CC = 1,
-                    threshold = 0.1,
-                    climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
+                    threshold = 0.02,
+                    climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/anomaly.",
                     raster.grid = raster(extent(-179.75, 179.75,
                                                 -23.25, 23.25),
                                          res = 1,
                                          crs = "+proj=longlat +datum=WGS84"),
-
                     x_var = c("tmp","tmin","tmax",
                               "dswrf","vpd","CO2",
                               "pre","top.sml"),
@@ -45,14 +44,16 @@ main.config <- list(lags = 12,
                     year.min = 1980,
                     year.max = 2050,
 
-                    Grid = expand.grid(
-                      nrounds = c(200, 600, 1200),
-                      max_depth = c(3, 6, 12),
-                      eta = c(0.03, 0.1),
-                      gamma = c(0),
-                      colsample_bytree = c(0.8),
-                      min_child_weight = c(1),
-                      subsample = c(0.8)),
+                    Grid = tidyr::crossing(
+                      eta_nrounds <- data.frame(
+                        eta     = c(0.10, 0.05, 0.03),
+                        nrounds = c( 400,   800,  1200)
+                      ),
+                      max_depth        = c(2, 4, 6),     # keep trees fairly shallow for stability
+                      min_child_weight = c(1, 3, 5),     # stronger regularization options
+                      gamma            = c(0),           # penalize splits a bit in some configs
+                      subsample        = c(0.7),         # row subsampling
+                      colsample_bytree = c(0.7)),
 
                     time2save = 600)
 

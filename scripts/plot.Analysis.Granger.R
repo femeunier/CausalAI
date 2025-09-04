@@ -49,16 +49,6 @@ ggplot(data = df.QoF) +
   facet_wrap(~ model) +
   theme(legend.position = "bottom")
 
-ggplot(data = df.QoF) +
-  geom_raster(aes(x = lon, y = lat,color = outcome,
-                  fill = outcome),
-              size = 0.1) +
-  geom_sf(data = world,fill = NA, color = "grey17") +
-  scale_y_continuous(limits = c(-10,5)) +
-  scale_x_continuous(limits = c(-15,60)) +
-  facet_wrap(~ model) +
-  theme(legend.position = "bottom")
-
 df.QoF %>%
   filter(model == "FLUXSAT") %>%
   filter(grepl("bug",tolower(outcome))) %>%
@@ -75,7 +65,7 @@ df.QoF %>%
 
 ggplot(data = df.QoF) +
   geom_boxplot(aes(x = model,
-                   y = mean.y)) +
+                   y = mean.abs.y)) +
   theme_bw()
 
 ggplot(data = df.QoF) +
@@ -96,14 +86,10 @@ ggplot(data = df.QoF) +
 
 system2("rsync",
         c("-avz",
-          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.test.Granger",ifelse(suffix == "",
-                                                                                             suffix,
-                                                                                             paste0(".",suffix)),".RDS"),
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.test.Granger.",suffix,".RDS"),
           "./outputs/"))
 
-df.test <- readRDS(paste0("./outputs/All.test.Granger",ifelse(suffix == "",
-                                                              suffix,
-                                                              paste0(".",suffix)),".RDS"))
+df.test <- readRDS(paste0("./outputs/All.test.Granger.",suffix,".RDS"))
 
 ggplot(data = df.test,
        aes(x = pred, y = obs)) +
@@ -120,14 +106,11 @@ ggplot(data = df.test,
 
 system2("rsync",
         c("-avz",
-          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.SHAP.Granger",ifelse(suffix == "",
-                                                                                             suffix,
-                                                                                             paste0(".",suffix)),".RDS"),
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.SHAP.Granger.",suffix,".RDS"),
           "./outputs/"))
 
-df.SHAP <- readRDS(paste0("./outputs/All.SHAP.Granger",ifelse(suffix == "",
-                                                              suffix,
-                                                              paste0(".",suffix)),".RDS"))
+df.SHAP <- readRDS(paste0("./outputs/All.SHAP.Granger.",suffix,".RDS")) %>%
+  filter(type == "full.model")
 
 df.SHAP.sum <- df.SHAP %>%
   group_by(model,lon_lat, lon,lat,cause,target) %>%
@@ -190,24 +173,32 @@ ggplot(data = df.SHAP.max2) +
 
 system2("rsync",
         c("-avz",
-          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.results.Granger",ifelse(suffix == "",
-                                                                                                suffix,
-                                                                                                paste0(".",suffix)),".RDS"),
+          paste0("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.results.Granger.",suffix,".RDS"),
           "./outputs/"))
 
-All.results.Granger <- readRDS(paste0("./outputs/All.results.Granger",ifelse(suffix == "",
-                                                                             suffix,
-                                                                             paste0(".",suffix)),".RDS"))
+All.results.Granger <- readRDS(paste0("./outputs/All.results.Granger.",suffix,".RDS")) %>%
+  filter(type == "zero.model")
 
 ggplot(data = All.results.Granger) +
   geom_raster(aes(x = lon, y = lat,
-                  fill = improvement)) +
+                  fill = 100*improvement/rmse_full)) +
   geom_sf(data = world,fill = NA, color = "grey17") +
   facet_wrap(~ model) +
   scale_y_continuous(limits = c(-1,1)*23.5) +
   scale_x_continuous(limits = c(-120,160)) +
+  scale_fill_gradient2(limits = c(-1,1)*30,
+                       oob = scales::squish) +
   theme_map() +
   theme(legend.position = "bottom")
+
+ggplot(data = All.results.Granger) +
+  geom_density(aes(x = 100*improvement/rmse_full, fill = model),
+               alpha = 0.5) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  theme_bw()
+
+summary(100*(All.results.Granger$improvement)/
+          All.results.Granger$rmse_full)
 
 All.results.Granger.signif <- All.results.Granger %>%
   mutate(signif = case_when(p_value < 0.05 ~ TRUE,

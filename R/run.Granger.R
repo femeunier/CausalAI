@@ -47,11 +47,11 @@ run.Granger <- function(config.file){
     arrange(year, month) %>%
     mutate(year_decimal = year + (month - 0.5) / 12)
 
-  monthly_df$CO2 <- approx(
-    x = CO2$year,
-    y = CO2$CO2,
-    xout = monthly_df$year_decimal)$y
+  f <- splinefun(CO2$year, CO2$CO2, method = "natural")
+  monthly_df$CO2 <- f(monthly_df$year_decimal)
 
+  monthly_df <- deseason_detrend(monthly_df, year.min = year.min, year.max = year.max) %>%
+    dplyr::select(year,month,CO2,co2detrended,co2anomaly)
 
   climate.list <- list()
   for (cvar in x_var){

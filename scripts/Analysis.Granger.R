@@ -133,21 +133,13 @@ for (cmodel in models){
 }
 
 saveRDS(df.QoF,
-        paste0("./outputs/All.QoF.Granger",ifelse(suffix == "",
-                                                  suffix,
-                                                  paste0(".",suffix)),".RDS"))
+        paste0("./outputs/All.QoF.Granger.",suffix,".RDS"))
 saveRDS(all.test,
-        paste0("./outputs/All.test.Granger",ifelse(suffix == "",
-                                                   suffix,
-                                                   paste0(".",suffix)),".RDS"))
+        paste0("./outputs/All.test.Granger.",suffix,".RDS"))
 saveRDS(all.SHAP,
-        paste0("./outputs/All.SHAP.Granger",ifelse(suffix == "",
-                                                   suffix,
-                                                   paste0(".",suffix)),".RDS"))
+        paste0("./outputs/All.SHAP.Granger.",suffix,".RDS"))
 saveRDS(all.results,
-        paste0("./outputs/All.results.Granger",ifelse(suffix == "",
-                                                      suffix,
-                                                      paste0(".",suffix)),".RDS"))
+        paste0("./outputs/All.results.Granger.",suffix,".RDS"))
 
 # scp /home/femeunier/Documents/projects/CausalAI/scripts/Analysis.Granger.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 

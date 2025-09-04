@@ -36,8 +36,8 @@ main.config <- list(lags = 6,
                               "pre","top.sml"),
                     y_var = "gppanomaly",
 
-                    year.min = 1900,
-                    year.max = 2100,
+                    year.min = 1980,
+                    year.max = 2050,
 
                     Grid = tidyr::crossing(
                       eta_nrounds <- data.frame(
