@@ -12,6 +12,8 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
 #             "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
 #             "MODIS")
 
+models <- c("CABLE-POP","FLUXSAT")
+
 suffix <- "gppanomaly"
 
 df.QoF <- all.test <- all.SHAP <- all.results <-

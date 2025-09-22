@@ -37,6 +37,12 @@ run.Granger <- function(config.file){
 
   dest.dir <- config[["dest.dir"]]
 
+  rolls <- config[["rolls"]]
+  sums <- config[["sums"]]
+
+
+  ######################################################################################################
+
   CO2 <- read.table("/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/global_co2_ann_1700_2024.txt") %>%
     rename(year = V1,
            CO2 = V2)
@@ -192,6 +198,50 @@ run.Granger <- function(config.file){
     df <- all %>%
       dplyr::select(-any_of(c("lon","lat","lon_lat",
                               "year","month")))
+
+
+    if (!is.null(rolls) | !is.null(sums)){
+      temp.df <- df
+    }
+
+
+    if (!is.null(rolls)){
+      for (croll in rolls){
+
+        print(paste0("Adding rolling mean variable -",croll))
+
+        df <- cbind(df,
+                    temp.df %>%
+                      group_by(lon, lat) %>%
+                      arrange(tnum, .by_group = TRUE) %>%
+                      mutate(across(
+                        -any_of(c("lon", "lat", "tnum")),
+                        ~ slide_dbl(.x, mean, .before = (croll - 1), .complete = FALSE),
+                        .names = paste0("{.col}_roll",croll))) %>%
+                      ungroup() %>%
+                      dplyr::select(ends_with(paste0("_roll",croll))))
+      }
+    }
+
+    if (!is.null(sums)){
+      for (csum in sums){
+
+        print(paste0("Adding rolling sum variable -",csum))
+
+        df <- cbind(df,
+                    temp.df %>%
+                      group_by(lon, lat) %>%
+                      arrange(tnum, .by_group = TRUE) %>%
+                      mutate(across(
+                        -any_of(c("lon", "lat", "tnum")),
+                        ~ slide_dbl(.x, sum, .before = (csum - 1), .complete = FALSE),
+                        .names = paste0("{.col}_sum",csum))) %>%
+                      ungroup() %>%
+                      dplyr::select(ends_with(paste0("_sum",csum))))
+      }
+    }
+
+
 
     if((nrow(df) < 60)){
       outcome = "Timeseries.too.short"

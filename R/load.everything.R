@@ -19,5 +19,6 @@ load.everything <- function(){
   library(CausalAI)
   library(raster)
   library(terra)
+  library(slider)
 
 }

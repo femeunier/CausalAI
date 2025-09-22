@@ -5,14 +5,13 @@ library(dplyr)
 library(glue)
 library(purrr)
 library(raster)
-library(CausalAI)
 library(lubridate)
+library(CausalAI)
 
-dest_dir <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/"
-clim_vars <- c("pre","tmp","tmin","tmax","dlwrf","spfh","VPD","dswrf")
-# clim_vars <- c("dswrf")
+dest_dir <- "/data/gent/vo/000/gvo00074/felicien/R/outputs/ERA5/"
+clim_vars <- c("pre","tmp","tmin","tmax","dlwrf","dswrf","spfh","VPD")
 
-raster.grid = terra::rast(raster(extent(-180, 180,
+raster.grid = rast(raster(extent(-180, 180,
                                  -25, 25),
                           res = 0.5,
                           crs = "+proj=longlat +datum=WGS84"))
@@ -24,12 +23,12 @@ land.frac.msk[land.frac.msk>=0.25] <- 1
 
 years.ref <- 1900:2100
 
-decades <- c(1980,1990,2000,2010,2020,2023)
-# decades <- 2020
+
+decades <- c(1980,1990,2000,2010,2020)
 
 message("Reading decade RDS files...")
 all_df <- map_dfr(decades, function(decade) {
-  readRDS(glue("./outputs/monthly.climate.pantropical.{decade}.RDS")) %>%
+  readRDS(glue("./outputs/monthly.climate.global.ERA5_{decade}.RDS")) %>%
     ungroup() %>%
     filter(year >= 1980, abs(lat) <= 25)
 })
@@ -94,11 +93,8 @@ for (v in clim_vars) {
   r <- terra::mask(project(r.rspld,crs(raster.grid)),
                    land.frac.msk)
 
-
   dates <- as.Date(paste0(sapply(strsplit(names(r),"\\_"),"[[",1),"/",
-                   sapply(strsplit(names(r),"\\_"),"[[",2),"/01"))
-
-  years <- year(dates)
+                          sapply(strsplit(names(r),"\\_"),"[[",2),"/01"))
 
   t_num <- lubridate::decimal_date(dates)
   r_detr <- terra::app(r, fun = function(v) detrend_vec(v, t_num))
@@ -137,5 +133,4 @@ for (v in clim_vars) {
 
 }
 
-
-# scp /home/femeunier/Documents/projects/CausalAI/scripts/Format.CRUJRA.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/CausalAI/scripts/Format.ERA5_variables.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

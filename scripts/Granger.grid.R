@@ -16,7 +16,6 @@ Nrun.max.per.job <- 100
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
-models <- models[1]
 
 main.config <- list(lags = 6,
                     initial = 240,

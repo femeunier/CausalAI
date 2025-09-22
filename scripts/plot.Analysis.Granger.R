@@ -8,6 +8,7 @@ library(raster)
 
 
 suffix <- "gppanomaly"
+# suffix <- "gppanomaly.product"
 
 system2("rsync",
         c("-avz",
@@ -16,6 +17,8 @@ system2("rsync",
           "./outputs/"))
 
 df.QoF <- readRDS(paste0("./outputs/All.QoF.Granger.",suffix,".RDS"))
+
+hist(df.QoF$Rsq)
 
 models <- sort(unique(df.QoF$model))
 

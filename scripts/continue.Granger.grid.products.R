@@ -11,26 +11,26 @@ library(ggthemes)
 ###############################################################
 # Settings
 
-Nrun.max.per.job <- 40
+Nrun.max.per.job <- 50
 
-products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
+products <- c("FLUXSAT","FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
               "GOSIF","Zhou","GLASS","Sun","Bi",
-              "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-              "MODIS")
+              "Madani","Zhang","VOD","NIR","Zheng",
+              "MODIS")[1:12]
 
-dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
+dirs <- c("FluxSat","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
-          "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
-          "MODIS_GPP")
+          "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng",
+          "MODIS_GPP")[1:12]
 
-main.config <- list(lags = 12,
-                    initial = 200,
-                    horizon = 12,
+main.config <- list(lags = 6,
+                    initial = 180,
+                    horizon = 3,
                     global.suffix = "Product",
                     step = 12,
                     skip = 11,
                     fac.CC = 1,
-                    threshold = 0.1,
+                    threshold = 0.02,
                     climate.location = "/data/gent/vo/000/gvo00074/felicien/R/outputs/CRUJRA/climate",
                     raster.grid = raster(extent(-179.75, 179.75,
                                                 -23.25, 23.25),
@@ -45,14 +45,16 @@ main.config <- list(lags = 12,
                     year.min = 1980,
                     year.max = 2050,
 
-                    Grid = expand.grid(
-                      nrounds = c(200, 600, 1200),
-                      max_depth = c(3, 6, 12),
-                      eta = c(0.03, 0.1),
-                      gamma = c(0),
-                      colsample_bytree = c(0.8),
-                      min_child_weight = c(1),
-                      subsample = c(0.8)),
+                    Grid = tidyr::crossing(
+                      eta_nrounds <- data.frame(
+                        eta     = c(0.10, 0.05, 0.03),
+                        nrounds = c( 400,   800,  1200)
+                      ),
+                      max_depth        = c(2, 4, 6),     # keep trees fairly shallow for stability
+                      min_child_weight = c(1, 3, 5),     # stronger regularization options
+                      gamma            = c(0),           # penalize splits a bit in some configs
+                      subsample        = c(0.7),         # row subsampling
+                      colsample_bytree = c(0.7)),
 
                     time2save = 600)
 
@@ -152,7 +154,6 @@ for (iproduct in seq(1,length(products))){
 
   product.config[["dest.dir"]] <- file.path(dir.name,cproduct)
   product.config[["name"]] <- cproduct
-
 
   productconfig.file <- file.path(dir.name,cproduct,
                                   paste0("config.",cproduct,".RDS"))

@@ -16,12 +16,12 @@ Nrun.max.per.job <- 100
 products <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
               "GOSIF","Zhou","GLASS","Sun","Bi",
               "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
-              "MODIS")[15]
+              "MODIS")[c(1:14,16)]
 
 dirs <- c("FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM_RS+METEO","FLUXCOM-X",
           "GOSIF.GPP","Zhou","GLASS","Sun","Bi",
           "Madani","Zhang","VOD.GPP","NIR.GPP","Zheng","FluxSat",
-          "MODIS_GPP")[15]
+          "MODIS_GPP")[c(1:14,16)]
 
 main.config <- list(lags = 6,
                     initial = 180,

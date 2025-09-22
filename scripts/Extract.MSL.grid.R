@@ -10,8 +10,6 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
 
-models <- c("LPX-Bern")
-
 dir <- "/data/gent/vo/000/gvo00074/felicien/TrENDYv13/"
 
 overwrite <- FALSE
