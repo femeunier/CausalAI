@@ -213,7 +213,6 @@ run.Granger <- function(config.file){
 
         df <- cbind(df,
                     temp.df %>%
-                      arrange(tnum, .by_group = TRUE) %>%
                       mutate(across(
                         -any_of(c("lon", "lat", "tnum")),
                         ~ slide_dbl(.x, mean, .before = (croll - 1), .complete = FALSE),
@@ -230,7 +229,6 @@ run.Granger <- function(config.file){
 
         df <- cbind(df,
                     temp.df %>%
-                      arrange(tnum, .by_group = TRUE) %>%
                       mutate(across(
                         -any_of(c("lon", "lat", "tnum")),
                         ~ slide_dbl(.x, sum, .before = (csum - 1), .complete = FALSE),
