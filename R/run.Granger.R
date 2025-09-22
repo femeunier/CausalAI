@@ -262,10 +262,10 @@ run.Granger <- function(config.file){
       smp_size <- floor(0.8 * nrow(df))
       train_ind <- 1:smp_size
 
-      mu  <- sapply(df[train_ind, , drop = FALSE], mean); mu[y_var]  <- 0
-      sdv <- sapply(df[train_ind, , drop = FALSE], sd);   sdv[y_var] <- 1
+      # mu  <- sapply(df[train_ind, , drop = FALSE], mean); mu[y_var]  <- 0
+      # sdv <- sapply(df[train_ind, , drop = FALSE], sd);   sdv[y_var] <- 1
+      # df <- scale_z(df, mu, sdv)
 
-      df <- scale_z(df, mu, sdv)
       dfl <- make_lags(df, max_lag = lags) %>%
         na.omit()
 

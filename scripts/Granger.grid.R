@@ -16,11 +16,12 @@ Nrun.max.per.job <- 100
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
             "LPJmL","LPX-Bern","VISIT")
+models <- c("CABLE-POP")
 
 main.config <- list(lags = 6,
                     initial = 240,
                     horizon = 3,
-                    global.suffix = "DGVM",
+                    global.suffix = "DGVM_rolls.sums",
                     step = 12,
                     skip = 11,
                     fac.CC = 86400*365,
@@ -35,16 +36,19 @@ main.config <- list(lags = 6,
                               "pre","top.sml"),
                     y_var = "gppanomaly",
 
+                    rolls = c(3,6),
+                    sums = c(3,6),
+
                     year.min = 1980,
                     year.max = 2050,
 
                     Grid = tidyr::crossing(
                       eta_nrounds <- data.frame(
-                        eta     = c(0.10, 0.05, 0.03),
-                        nrounds = c( 400,   800,  1200)
+                        eta     = c(0.10, 0.03),
+                        nrounds = c( 400,  1200)
                       ),
-                      max_depth        = c(2, 4, 6),     # keep trees fairly shallow for stability
-                      min_child_weight = c(1, 3, 5),     # stronger regularization options
+                      max_depth        = c(2, 4),     # keep trees fairly shallow for stability
+                      min_child_weight = c(1, 5),     # stronger regularization options
                       gamma            = c(0),        # penalize splits a bit in some configs
                       subsample        = c(0.7),    # row subsampling
                       colsample_bytree = c(0.7)),     # feature subsampling
