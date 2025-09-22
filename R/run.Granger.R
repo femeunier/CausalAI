@@ -259,7 +259,7 @@ run.Granger <- function(config.file){
 
     if (!skip){
 
-      smp_size <- floor(0.8 * nrow(df))
+      smp_size <- floor(0.9* nrow(df))
       train_ind <- 1:smp_size
 
       # mu  <- sapply(df[train_ind, , drop = FALSE], mean); mu[y_var]  <- 0
