@@ -201,7 +201,8 @@ run.Granger <- function(config.file){
 
 
     if (!is.null(rolls) | !is.null(sums)){
-      temp.df <- df
+      temp.df <- df %>%
+        dplyr::select(-starts_with(paste0(y_var,"_")))
     }
 
 
