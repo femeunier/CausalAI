@@ -201,8 +201,7 @@ run.Granger <- function(config.file){
 
 
     if (!is.null(rolls) | !is.null(sums)){
-      temp.df <- df %>%
-        dplyr::select(-starts_with(paste0(y_var,"_")))
+      temp.df <- df
     }
 
 
@@ -220,6 +219,10 @@ run.Granger <- function(config.file){
                       ungroup() %>%
                       dplyr::select(ends_with(paste0("_roll",croll))))
       }
+
+      df <- df %>%
+        dplyr::select(-starts_with(paste0(y_var,"_")))
+
     }
 
     if (!is.null(sums)){
@@ -236,8 +239,10 @@ run.Granger <- function(config.file){
                       ungroup() %>%
                       dplyr::select(ends_with(paste0("_sum",csum))))
       }
-    }
 
+      df <- df %>%
+        dplyr::select(-starts_with(paste0(y_var,"_")))
+    }
 
 
     if((nrow(df) < 60)){
@@ -304,7 +309,8 @@ run.Granger <- function(config.file){
           colsample_bytree = bestTune$colsample_bytree, min_child_weight = bestTune$min_child_weight,
           subsample = bestTune$subsample
         )
-        final_model <- xgb.train(params, dtrain, nrounds = bestTune$nrounds, verbose = 0)
+        final_model <- xgb.train(params, dtrain, nrounds = bestTune$nrounds,
+                                 verbose = 2)
 
         y.pred <- predict(final_model,
                           dfl.test[,bestModel$feature_names])
@@ -358,7 +364,8 @@ run.Granger <- function(config.file){
           colsample_bytree = bestTune0$colsample_bytree, min_child_weight = bestTune0$min_child_weight,
           subsample = bestTune0$subsample
         )
-        final_model0 <- xgb.train(params, dtrain, nrounds = bestTune0$nrounds, verbose = 0)
+        final_model0 <- xgb.train(params, dtrain, nrounds = bestTune0$nrounds,
+                                  verbose = 2)
 
         y.pred0 <- predict(final_model0,
                            dfl.test[,fit0$finalModel$feature_names])
