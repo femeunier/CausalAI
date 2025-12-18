@@ -5,14 +5,14 @@ library(tidyr)
 
 models <- c("CABLE-POP","CLASSIC","CLM6.0",
             "E3SM","JSBACH","JULES","LPJ-GUESS",
-            "LPJmL","LPX-Bern","VISIT")
+            "LPJmL","LPX-Bern","VISIT")[1]
 
 # models <- c("FLUXCOM_ANN","FLUXCOM_RF","FLUXCOM_HB_RF","FLUXCOM-X",
 #             "GOSIF","Zhou","GLASS","Sun","Bi",
 #             "Madani","Zhang","VOD","NIR","Zheng","FLUXSAT",
 #             "MODIS")
 
-models <- c("CABLE-POP","FLUXSAT")
+# models <- c("CABLE-POP","FLUXSAT")
 
 suffix <- "gppanomaly"
 

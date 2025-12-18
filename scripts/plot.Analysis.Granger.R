@@ -17,8 +17,19 @@ system2("rsync",
           "./outputs/"))
 
 df.QoF <- readRDS(paste0("./outputs/All.QoF.Granger.",suffix,".RDS"))
+df.QoF %>%
+  filter(lon == 23.75, lat == 0.75)
+
+
 
 hist(df.QoF$Rsq)
+hist(df.QoF$Rsq - df.QoF$Rsq0)
+summary(df.QoF$Rsq - df.QoF$Rsq0)
+
+
+
+hist((df.QoF$RMSE0 - df.QoF$RMSE))
+summary((df.QoF$RMSE0 - df.QoF$RMSE))
 
 models <- sort(unique(df.QoF$model))
 
@@ -52,12 +63,6 @@ ggplot(data = df.QoF) +
   facet_wrap(~ model) +
   theme(legend.position = "bottom")
 
-df.QoF %>%
-  filter(model == "FLUXSAT") %>%
-  filter(grepl("bug",tolower(outcome))) %>%
-  pull(lon_lat) %>%
-  unique()
-
 table(df.QoF$outcome)
 
 df.QoF %>%
@@ -77,13 +82,26 @@ ggplot(data = df.QoF) +
   geom_sf(data = world,fill = NA, color = "grey17") +
   scale_y_continuous(limits = c(-1,1)*23.5) +
   scale_x_continuous(limits = c(-120,160)) +
+  scale_fill_gradient2(limits = c(0,1)) +
   facet_wrap(~ model) +
   theme_map()
-
 
 ggplot(data = df.QoF) +
   geom_boxplot(aes(x = model, y = Rsq)) +
   theme_bw()
+
+
+
+ggplot(data = df.QoF) +
+  geom_raster(aes(x = lon, y = lat,
+                  fill = RMSE0 - RMSE)) +
+  geom_sf(data = world,fill = NA, color = "grey17") +
+  facet_wrap(~ model) +
+  scale_y_continuous(limits = c(-1,1)*23.5) +
+  scale_x_continuous(limits = c(-120,160)) +
+  scale_fill_gradient2() +
+  theme_map() +
+  theme(legend.position = "bottom")
 
 ################################################################################
 
@@ -96,12 +114,14 @@ df.test <- readRDS(paste0("./outputs/All.test.Granger.",suffix,".RDS"))
 
 ggplot(data = df.test,
        aes(x = pred, y = obs)) +
-  geom_hex(aes(fill = stat(log(count)))) +
+  geom_hex(aes(fill = stat(log10(count)))) +
   stat_smooth(aes(color = model),
               method = "lm", se = FALSE) +
   geom_abline(slope = 1, intercept = 0, color = "black",
               linetype = 2) +
   facet_wrap(~ model) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 0, linetype = 2) +
   coord_equal() +
   theme_bw()
 
@@ -116,18 +136,10 @@ df.SHAP <- readRDS(paste0("./outputs/All.SHAP.Granger.",suffix,".RDS")) %>%
   filter(type == "full.model")
 
 df.SHAP.sum <- df.SHAP %>%
+  mutate(cause = sub("_.*", "", cause)) %>%
   group_by(model,lon_lat, lon,lat,cause,target) %>%
   summarise(SHAP.m = abs(sum(mean_shap,na.rm = TRUE)),
             .groups = "keep")
-
-ggplot(data = df.SHAP %>%
-         group_by(model) %>%
-         filter(lon_lat == lon_lat[1])) +
-  geom_line(aes(x = lag,
-                y = mean_shap,
-                color = cause)) +
-  facet_wrap(~ model) +
-  theme_bw()
 
 df.SHAP.max <- df.SHAP.sum %>%
   group_by(model,lon_lat,lon,lat,target) %>%
@@ -151,8 +163,10 @@ df.SHAP.max %>%
 
 df.SHAP.max2 <- df.SHAP.sum %>%
   ungroup() %>%
-  mutate(cause.cat = case_when(cause %in% c("tmin","tmp","tmax","vpd") ~ "Demand",
-                               cause %in% c("pre","top.sml") ~ "Supply",
+  mutate(cause.cat = case_when(grepl(paste0(c("tmin","tmp","tmax","vpd"),
+                                            collapse = "|"),
+                                     cause) ~ "Demand",
+                               grepl("pre|top.sml",cause) ~ "Supply",
                                TRUE ~ cause)) %>%
   group_by(model,lon_lat,lon,lat,
            cause.cat,target) %>%
@@ -180,7 +194,7 @@ system2("rsync",
           "./outputs/"))
 
 All.results.Granger <- readRDS(paste0("./outputs/All.results.Granger.",suffix,".RDS")) %>%
-  filter(type == "zero.model")
+  filter(type == "full.model")
 
 ggplot(data = All.results.Granger) +
   geom_raster(aes(x = lon, y = lat,
@@ -193,6 +207,8 @@ ggplot(data = All.results.Granger) +
                        oob = scales::squish) +
   theme_map() +
   theme(legend.position = "bottom")
+
+
 
 ggplot(data = All.results.Granger) +
   geom_density(aes(x = 100*improvement/rmse_full, fill = model),

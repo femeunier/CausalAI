@@ -19,7 +19,7 @@ models <- c("CABLE-POP","CLASSIC","CLM6.0",
 models <- c("CABLE-POP")
 
 main.config <- list(lags = 6,
-                    initial = 240,
+                    initial = 408,
                     horizon = 3,
                     global.suffix = "DGVM_rolls.sums",
                     step = 12,
